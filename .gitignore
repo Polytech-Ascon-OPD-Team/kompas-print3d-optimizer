@@ -1,0 +1,14 @@
+*.user
+
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+
+.vs/
+
+*.bsc
+*.exp
+*.lib
+*.pdb
+*.rtw
