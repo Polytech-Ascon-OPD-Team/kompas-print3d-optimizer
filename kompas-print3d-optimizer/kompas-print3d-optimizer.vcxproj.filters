@@ -26,16 +26,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Events\COM\ApplicationEvent.cpp">
-      <Filter>Events</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="Events\AUTO\ApplicationEvent.cpp">
-      <Filter>Events</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="mainDll.def" />
   </ItemGroup>
   <ItemGroup>

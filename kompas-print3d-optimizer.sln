@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.32602.291
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "kompas-print3d-optimizer", "kompas-print3d-optimizer\kompas-print3d-optimizer.vcxproj", "{9A2403B1-CE04-4AFE-B3AC-216B74E52CE2}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sandbox", "sandbox\sandbox.vcxproj", "{DF288D91-1A70-4385-9A69-702A3245DF85}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -15,6 +17,10 @@ Global
 		{9A2403B1-CE04-4AFE-B3AC-216B74E52CE2}.Debug|x64.Build.0 = Debug|x64
 		{9A2403B1-CE04-4AFE-B3AC-216B74E52CE2}.Release|x64.ActiveCfg = Release|x64
 		{9A2403B1-CE04-4AFE-B3AC-216B74E52CE2}.Release|x64.Build.0 = Release|x64
+		{DF288D91-1A70-4385-9A69-702A3245DF85}.Debug|x64.ActiveCfg = Debug|x64
+		{DF288D91-1A70-4385-9A69-702A3245DF85}.Debug|x64.Build.0 = Debug|x64
+		{DF288D91-1A70-4385-9A69-702A3245DF85}.Release|x64.ActiveCfg = Release|x64
+		{DF288D91-1A70-4385-9A69-702A3245DF85}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
