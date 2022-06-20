@@ -1,5 +1,6 @@
 ﻿#include <iostream>
 #include <conio.h>
+#include <list>
 
 #include "kompasUtils.hpp"
 
@@ -45,6 +46,8 @@ int main() {
     std::cout << "print face\n";
     _getch();
     chooseMng->UnChooseAll();
+
+    std::list<ksLoopPtr> bridgeHoleLoops;
 
     for (int faceIndex = 0; faceIndex < facesCount; faceIndex++) {
         ksFaceDefinitionPtr face = faces->GetByIndex(faceIndex);
@@ -118,14 +121,21 @@ int main() {
                     }
                 }
                 if (isHoleEdgeLower) {
-                    chooseMng->Choose(holeEdge);
-                } else {
-                    break;
+                    bridgeHoleLoops.push_back(innerLoop);
                 }
-
+                break;
             }
-
         }
     }
+
+    for (ksLoopPtr bridgeHoleLoop : bridgeHoleLoops) {
+        ksEdgeCollectionPtr edges(bridgeHoleLoop->EdgeCollection());
+        int edgesCount = edges->GetCount();
+        for (int edgeIndex = 0; edgeIndex < edgesCount; edgeIndex++) {
+            ksEdgeDefinitionPtr edge(edges->GetByIndex(edgeIndex));
+            chooseMng->Choose(edge);
+        }
+    }
+
     return 0;
 }
