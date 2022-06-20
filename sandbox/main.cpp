@@ -3,6 +3,7 @@
 #include <vector>
 #include <cmath>
 #include <set>
+#include <float.h>
 
 #include "kompasUtils.hpp"
 
@@ -42,9 +43,38 @@ void checkPlane(KompasObjectPtr kompas, double a, double b, double c, double d, 
     }
 }
 
-typedef struct {
+class PlaneEq {
+public:
     double a, b, c, d;
-} PlaneEq;
+    // определяет вертикальное ли это ребро (угол с нормалью плоскости печати должен быть больше 45 градусов)
+    bool isVertical(ksEdgeDefinitionPtr edge) {
+        try
+        {
+            double x1, x2, y1, y2, z1, z2, x, y, z;
+            ksVertexDefinitionPtr vertex1(edge->GetVertex(true));
+            ksVertexDefinitionPtr vertex2(edge->GetVertex(false));
+            vertex1->GetPoint(&x1, &y1, &z1);
+            vertex2->GetPoint(&x2, &y2, &z2);
+            x = x2 - x1;
+            y = y2 - y1;
+            z = z2 - z1;
+            double n_mul_vect = (a * x) + (b * x) + (c * z);
+            double n_abs = sqrt((a * a) + (b * b) + (c * c));
+            double vect_abs = sqrt((x * x) + (y * y) + (z * z));
+            if ((n_abs > 0.001) && (vect_abs > 0.001)) {
+                double cos_n_vect = n_mul_vect / (n_abs * vect_abs);
+                return abs(cos_n_vect) > 0.70710678118;
+            }
+            else {
+                return false;
+            }
+        }
+        catch (_com_error& e)
+        {
+            return false;
+        }
+    }
+};
 
 /** Возвращает выбранную пользователем грань, если она удовлетворяет всем требованиям. A также через аргумент *planeEq, передаёт коэф. уравнения плоскости.
 **/
@@ -131,18 +161,73 @@ ksFaceDefinitionPtr getSelectedPlane(KompasObjectPtr kompas, PlaneEq* planeEq) {
             }
 
         }
+        else if(selectionMng->GetCount() > 0) {
+            kompas->ksMessage("Должен был быть выбран только один элемент в виде плоской грани!");
+        }
         else {
-            kompas->ksMessage("Должен быть был выбран только один элемент в виде плоской грани!");
+            kompas->ksMessage("Плоскость печати не выбрана!");
         }
 
     }
     return nullptr;
 }
 
+bool checkEdge(ksEdgeDefinitionPtr edge, double minWidth) {
+    try {
+        ksFaceDefinitionPtr face1(edge->GetAdjacentFace(true));
+        ksFaceDefinitionPtr face2(edge->GetAdjacentFace(false));
+        double area1 = face1->GetArea(0x1);
+        double area2 = face2->GetArea(0x1);
+        double lenOfEdge = edge->GetLength(0x1);
+        return edge->IsStraight() && face1->IsPlanar() && face2->IsPlanar() && (area1/lenOfEdge >= minWidth) && (area2 / lenOfEdge >= minWidth);
+    }
+    catch (_com_error& e)
+    {
+        return false;
+    }
+}
 
 int main() {
     CoInitialize(nullptr);
     KompasObjectPtr kompas = kompasInit();
     PlaneEq planeEq;
     ksFaceDefinitionPtr face = getSelectedPlane(kompas, &planeEq);
+    if (face) {
+        double radius;
+        if (kompas->ksReadDouble("Введите радиус: ", 0.0, DBL_MIN, DBL_MAX, &radius) == 1) {
+            IApplicationPtr api7 = kompas->ksGetApplication7();
+            IKompasDocument3DPtr document3d(api7->GetActiveDocument());
+            ksDocument3DPtr doc3d = kompas->ActiveDocument3D();
+            ksChooseMngPtr chooseMng(doc3d->GetChooseMng());
+            IPart7Ptr topPart(document3d->GetTopPart());
+            ksPartPtr part = kompas->TransferInterface(topPart, 1, 0);
+            ksFeaturePtr feature(part->GetFeature());
+            ksEntityCollectionPtr entityCollection(feature->EntityCollection(o3d_edge));
+            entityCollection->GetCount();
+            chooseMng->UnChooseAll();
+
+            for (int i = 0; i < entityCollection->GetCount(); i++) {
+                ksEntityPtr entity(entityCollection->GetByIndex(i));
+                ksEdgeDefinitionPtr edge(entity->GetDefinition());
+                if (edge && checkEdge(edge, radius)) {
+                    bool isVerical = planeEq.isVertical(edge);
+                    if (isVerical) {
+                        /*
+                        chooseMng->Choose(edge);
+                        */
+                        ksEntityPtr filletEntity(part->NewEntity(o3d_fillet));
+                        ksFilletDefinitionPtr fillet(filletEntity->GetDefinition());
+                        ksEntityCollectionPtr array(fillet->array());
+                        fillet->radius = radius;
+                        array->Add(entity);
+                        filletEntity->Create();
+                        std::cout << "найдено вертикальное ребро" << "\n";
+                    }
+                    else {
+                        std::cout << "найдено невертикальное ребро" << "\n";
+                    }
+                }
+            }
+        }
+    }
 }
