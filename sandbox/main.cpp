@@ -36,7 +36,7 @@ int main() {
     // Задаем грань стола 3д принтера. Только для тестирования
     for (int printFaceIndex = 0; printFaceIndex < facesCount; printFaceIndex++) {
         printFace = faces->GetByIndex(printFaceIndex);
-        if (abs(printFace->GetArea(ksLUnMM) - 968) < 2) {
+        if (abs(printFace->GetArea(ksLUnMM) - 932) < 2) {
             break;
         }
     }
@@ -65,78 +65,64 @@ int main() {
                 continue;
             }
             ksEdgeCollectionPtr edges(innerLoop->EdgeCollection());
+            int edgesCount = edges->GetCount();
 
-            if (edges->GetCount() == 1) {
-                ksEdgeDefinitionPtr holeEdge(edges->GetByIndex(0));
-                if (!holeEdge->IsCircle()) {
-                    continue;
-                }
-                ksFaceDefinitionPtr cylinderFace(holeEdge->GetAdjacentFace(false));
-                if (!cylinderFace->IsCylinder()) {
-                    continue;
+            for (int holeEdgeIndex = 0; holeEdgeIndex < edgesCount; holeEdgeIndex++) {
+                ksEdgeDefinitionPtr holeEdge(edges->GetByIndex(holeEdgeIndex));
+                ksFaceDefinitionPtr holeFace(holeEdge->GetAdjacentFace(false));
+
+                if (edgesCount == 1) {
+                    if (!holeEdge->IsCircle()) {
+                        break;
+                    }
+                    ksFaceDefinitionPtr cylinderFace(holeEdge->GetAdjacentFace(false));
+                    if (!cylinderFace->IsCylinder()) {
+                        break;
+                    }
+                } else {
+                    measurer->SetObject1(printFace);
+                    measurer->SetObject2(holeFace);
+                    measurer->Calc();
+                    double angle = measurer->angle;
+                    if (!(doubleEqual(angle, 90.0) || doubleEqual(angle, 270.0))) {
+                        break;
+                    }
                 }
 
                 measurer->SetObject1(printFace);
                 measurer->SetObject2(holeEdge);
                 measurer->Calc();
-                double distanceToMainEdge = measurer->MinDistance;
-                bool isMainEdgeLower = true;
+                double distanceToHoleEdge = measurer->distance;
+                bool isHoleEdgeLower = true;
 
-                ksEdgeCollectionPtr edges2(cylinderFace->EdgeCollection());
+                ksEdgeCollectionPtr edges2(holeFace->EdgeCollection());
                 for (int edge2Index = 0; edge2Index < edges2->GetCount(); edge2Index++) {
                     ksEdgeDefinitionPtr edge2(edges2->GetByIndex(edge2Index));
                     if (edge2 == holeEdge) {
                         continue;
                     }
 
+                    measurer->SetObject1(printFace);
                     measurer->SetObject2(edge2);
                     measurer->Calc();
-                    double distanceToEdge2 = measurer->MinDistance;
-                    if (distanceToEdge2 < distanceToMainEdge) {
-                        isMainEdgeLower = false;
-                        break;
-                    }
-                }
-                if (isMainEdgeLower) {
-                    chooseMng->Choose(holeEdge);
-                }
-
-            } else {
-                for (int holeEdgeIndex = 0; holeEdgeIndex < edges->GetCount(); holeEdgeIndex++) {
-                    ksEdgeDefinitionPtr holeEdge(edges->GetByIndex(holeEdgeIndex));
-                    ksFaceDefinitionPtr holeFace(holeEdge->GetAdjacentFace(false));
-
-                    measurer->SetObject1(printFace);
-                    measurer->SetObject2(holeEdge);
-                    measurer->Calc();
-                    double distanceToHoleEdge = measurer->distance;
-                    bool isHoleEdgeLower = true;
-
-                    ksEdgeCollectionPtr edges2(holeFace->EdgeCollection());
-                    for (int edge2Index = 0; edge2Index < edges2->GetCount(); edge2Index++) {
-                        ksEdgeDefinitionPtr edge2(edges2->GetByIndex(edge2Index));
-                        if (edge2 == holeEdge) {
-                            continue;
-                        }
-
-                        measurer->SetObject2(edge2);
-                        measurer->Calc();
+                    if (edgesCount != 1) {
                         double angle = measurer->angle;
-                        if (doubleEqual(angle, 90) || doubleEqual(angle, 270)) {
+                        if (doubleEqual(angle, 90.0) || doubleEqual(angle, 270.0)) {
                             continue;
                         }
-                        double distanceToEdge2 = measurer->distance;
-                        if (distanceToEdge2 < distanceToHoleEdge) {
-                            isHoleEdgeLower = false;
-                            break;
-                        }
                     }
-                    if (isHoleEdgeLower) {
-                        chooseMng->Choose(holeEdge);
-                    } else {
+                    double distanceToEdge2 = measurer->distance;
+                    if (distanceToEdge2 < distanceToHoleEdge) {
+                        isHoleEdgeLower = false;
                         break;
                     }
                 }
+                if (isHoleEdgeLower) {
+                    chooseMng->Choose(holeEdge);
+                } else {
+                    break;
+                }
+
             }
 
         }
