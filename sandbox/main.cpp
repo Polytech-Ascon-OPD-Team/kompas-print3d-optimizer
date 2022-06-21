@@ -13,18 +13,19 @@ bool doubleEqual(double a, double b, double epsilon = 0.00001) {
     return (abs(a - b) < epsilon);
 }
 
+struct BridgeHoleTarget {
+    ksLoopPtr loop;
+    ksFaceDefinitionPtr face;
+};
+
 int main() {
     CoInitialize(nullptr);
     KompasObjectPtr kompas = kompasInit();
 
-    IApplicationPtr api7 = kompas->ksGetApplication7();
-    IKompasDocument3DPtr document3d(api7->GetActiveDocument());
-    IPart7Ptr topPart(document3d->GetTopPart());
+    ksDocument3DPtr document3d = kompas->ActiveDocument3D();
+    ksChooseMngPtr chooseMng(document3d->GetChooseMng());
 
-    ksDocument3DPtr doc3d = kompas->ActiveDocument3D();
-    ksChooseMngPtr chooseMng(doc3d->GetChooseMng());
-
-    ksPartPtr part = kompas->TransferInterface(topPart, 1, 0);
+    ksPartPtr part(document3d->GetPart(pTop_Part));
     ksBodyPtr body = part->GetMainBody();
 
     ksMeasurerPtr measurer(part->GetMeasurer());
@@ -37,7 +38,7 @@ int main() {
     // Задаем грань стола 3д принтера. Только для тестирования
     for (int printFaceIndex = 0; printFaceIndex < facesCount; printFaceIndex++) {
         printFace = faces->GetByIndex(printFaceIndex);
-        if (abs(printFace->GetArea(ksLUnMM) - 932) < 2) {
+        if (abs(printFace->GetArea(ksLUnMM) - 1146) < 2) {
             break;
         }
     }
@@ -47,14 +48,15 @@ int main() {
     _getch();
     chooseMng->UnChooseAll();
 
-    std::list<ksLoopPtr> bridgeHoleLoops;
+    std::list<BridgeHoleTarget> bridgeHoleTargets;
 
     for (int faceIndex = 0; faceIndex < facesCount; faceIndex++) {
         ksFaceDefinitionPtr face = faces->GetByIndex(faceIndex);
         if (!face->IsPlanar() || (face == printFace)) {
             continue;
         }
-        measurer->SetObject1(printFace); measurer->SetObject2(face);
+        measurer->SetObject1(printFace);
+        measurer->SetObject2(face);
         measurer->Calc();
         double angle = measurer->angle;
         if (!(doubleEqual(angle, 0.0) || doubleEqual(angle, 180))) {
@@ -74,21 +76,17 @@ int main() {
                 ksEdgeDefinitionPtr holeEdge(edges->GetByIndex(holeEdgeIndex));
                 ksFaceDefinitionPtr holeFace(holeEdge->GetAdjacentFace(false));
 
-                if (edgesCount == 1) {
-                    if (!holeEdge->IsCircle()) {
+                if (!holeFace->IsCylinder()) {
+                    if (!holeFace->IsPlanar()) {
                         break;
-                    }
-                    ksFaceDefinitionPtr cylinderFace(holeEdge->GetAdjacentFace(false));
-                    if (!cylinderFace->IsCylinder()) {
-                        break;
-                    }
-                } else {
-                    measurer->SetObject1(printFace);
-                    measurer->SetObject2(holeFace);
-                    measurer->Calc();
-                    double angle = measurer->angle;
-                    if (!(doubleEqual(angle, 90.0) || doubleEqual(angle, 270.0))) {
-                        break;
+                    } else {
+                        measurer->SetObject1(printFace);
+                        measurer->SetObject2(holeFace);
+                        measurer->Calc();
+                        double angle = measurer->angle;
+                        if (!(doubleEqual(angle, 90.0) || doubleEqual(angle, 270.0))) {
+                            break;
+                        }
                     }
                 }
 
@@ -121,21 +119,38 @@ int main() {
                     }
                 }
                 if (isHoleEdgeLower) {
-                    bridgeHoleLoops.push_back(innerLoop);
+                    BridgeHoleTarget target{ innerLoop, face };
+                    bridgeHoleTargets.push_back(target);
                 }
                 break;
             }
         }
     }
 
-    for (ksLoopPtr bridgeHoleLoop : bridgeHoleLoops) {
-        ksEdgeCollectionPtr edges(bridgeHoleLoop->EdgeCollection());
+    for (BridgeHoleTarget target : bridgeHoleTargets) {
+        ksEntityPtr sketchEntity(part->NewEntity(o3d_sketch));
+        ksSketchDefinitionPtr sketchDef(sketchEntity->GetDefinition());
+        sketchDef->SetPlane(target.face);
+        sketchEntity->Create();
+        sketchDef->BeginEdit();
+
+        ksEdgeCollectionPtr edges(target.loop->EdgeCollection());
         int edgesCount = edges->GetCount();
         for (int edgeIndex = 0; edgeIndex < edgesCount; edgeIndex++) {
-            ksEdgeDefinitionPtr edge(edges->GetByIndex(edgeIndex));
-            chooseMng->Choose(edge);
+            sketchDef->AddProjectionOf(edges->GetByIndex(edgeIndex));
         }
+        sketchDef->EndEdit();
+        
+        ksEntityPtr extrusionEntity(part->NewEntity(o3d_bossExtrusion));
+        ksBossExtrusionDefinitionPtr extrusionDef(extrusionEntity->GetDefinition());
+        extrusionDef->chooseType = ksChBodiesAndParts;
+        extrusionDef->directionType = dtReverse;
+        extrusionDef->SetSideParam(false, etBlind, 0.4, 0, false);
+        extrusionDef->SetSketch(sketchEntity);
+        extrusionEntity->Create();
     }
+
+    document3d->RebuildDocument(); // Нужно чтобы исправить странные ошибки "Вырожденная проекция ребра"
 
     return 0;
 }
