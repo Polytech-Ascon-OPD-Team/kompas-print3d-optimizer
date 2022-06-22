@@ -268,6 +268,7 @@
     <Reference Include="System.Xml" />
     <ClCompile Include="kompasUtils.cpp" />
     <ClCompile Include="mainLibrary.cpp" />
+    <ClCompile Include="optimizeElephantFoot.cpp" />
     <ClCompile Include="optimizeRounding.cpp" />
     <ClCompile Include="selectPlane.cpp" />
     <ClCompile Include="StdAfx.cpp">
@@ -277,6 +278,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClInclude Include="kompasUtils.hpp" />
+    <ClInclude Include="optimizeElephantFoot.hpp" />
     <ClInclude Include="optimizeRounding.hpp" />
     <ClInclude Include="resources\resource.h" />
     <ClInclude Include="selectPlane.hpp" />

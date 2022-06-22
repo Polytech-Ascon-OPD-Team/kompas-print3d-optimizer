@@ -37,7 +37,6 @@ void optimizeByRounding(KompasObjectPtr kompas, ksFaceDefinitionPtr face, PlaneE
     ksPartPtr part = kompas->TransferInterface(topPart, 1, 0);
     ksFeaturePtr feature(part->GetFeature());
     ksEntityCollectionPtr entityCollection(feature->EntityCollection(o3d_edge));
-    entityCollection->GetCount();
     for (int i = 0; i < entityCollection->GetCount(); i++) {
         ksEntityPtr entity(entityCollection->GetByIndex(i));
         ksEdgeDefinitionPtr edge(entity->GetDefinition());

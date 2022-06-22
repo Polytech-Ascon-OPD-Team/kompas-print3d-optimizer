@@ -16,6 +16,9 @@
     <ClInclude Include="optimizeRounding.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="optimizeElephantFoot.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mainLibrary.cpp">
@@ -34,6 +37,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="optimizeRounding.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizeElephantFoot.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

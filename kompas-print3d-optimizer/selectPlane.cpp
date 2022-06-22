@@ -7,10 +7,8 @@
 #import "kAPI7.tlb" no_namespace named_guids rename( "CreateWindow", "ICreateWindow" ) rename( "PostMessage", "IPostMessage" ) rename( "MessageBoxEx", "IMessageBoxEx" )
 
 void checkPlane(KompasObjectPtr kompas, double a, double b, double c, double d, int* s1, int* s2) {
-    double eps = 0.0000001;
     *s1 = 0;
     *s2 = 0;
-    //EntityCollection entityCollection();
     IApplicationPtr api7 = kompas->ksGetApplication7();
     IKompasDocument3DPtr document3d(api7->GetActiveDocument());
     IPart7Ptr topPart(document3d->GetTopPart());
@@ -24,9 +22,9 @@ void checkPlane(KompasObjectPtr kompas, double a, double b, double c, double d, 
         double x, y, z;
         if (vertex) {
             vertex->GetPoint(&x, &y, &z);
-            if ((x * a) + (y * b) + (z * c) + d > eps) {
+            if ((x * a) + (y * b) + (z * c) + d > PLANE_BORDER_EPS) {
                 (*s1)++;
-            } else if ((x * a) + (y * b) + (z * c) + d < -eps) {
+            } else if ((x * a) + (y * b) + (z * c) + d < -PLANE_BORDER_EPS) {
                 (*s2)++;
             }
         }
@@ -67,7 +65,6 @@ bool PlaneEq::isVertical(ksEdgeDefinitionPtr edge, double cos_angle) {
 /** Возвращает выбранную пользователем грань, если она удовлетворяет всем требованиям. A также через аргумент *planeEq, передаёт коэф. уравнения плоскости.
 **/
 ksFaceDefinitionPtr getSelectedPlane(KompasObjectPtr kompas, PlaneEq* planeEq) {
-    std::setlocale(LC_ALL, "Russian");
     if (kompas) {
         ksDocument3DPtr doc3d = kompas->ActiveDocument3D();
         ksSelectionMngPtr selectionMng(doc3d->GetSelectionMng());
@@ -83,12 +80,8 @@ ksFaceDefinitionPtr getSelectedPlane(KompasObjectPtr kompas, PlaneEq* planeEq) {
                         std::cout << "Грань является плоской" << "\n";
 
                         ksSurfacePtr surface(face->GetSurface());
-                        ksPlaneParamPtr planeParam(surface->GetSurfaceParam());
-                        ksPlacementPtr placement(planeParam->GetPlacement());
                         double x0, y0, z0;
-
-                        // получааем координаты точки отсчёта
-                        placement->GetOrigin(&x0, &y0, &z0);
+                        surface->GetPoint(surface->GetParamUMax(), surface->GetParamVMax(), &x0, &y0, &z0);
                         double a, b, c, d;
 
                         surface->GetNormal(surface->GetParamUMax(), surface->GetParamVMax(), &a, &b, &c);
