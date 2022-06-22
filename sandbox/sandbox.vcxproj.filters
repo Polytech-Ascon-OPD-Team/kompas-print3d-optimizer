@@ -15,9 +15,21 @@
     <ClCompile Include="kompasUtils.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="selectPlane.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizeRounding.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kompasUtils.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="selectPlane.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="optimizeRounding.hpp">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

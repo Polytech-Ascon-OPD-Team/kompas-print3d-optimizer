@@ -144,9 +144,13 @@
   <ItemGroup>
     <ClCompile Include="kompasUtils.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="optimizeRounding.cpp" />
+    <ClCompile Include="selectPlane.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kompasUtils.hpp" />
+    <ClInclude Include="optimizeRounding.hpp" />
+    <ClInclude Include="selectPlane.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
