@@ -18,10 +18,8 @@ void optimizeElephantFoot(KompasObjectPtr kompas, ksFaceDefinitionPtr face, Plan
         ksEntityPtr entity(entityCollection->GetByIndex(i));
         ksFaceDefinitionPtr currFace(entity->GetDefinition());
         if (currFace && currFace->IsPlanar()) {
-            ksSurfacePtr surface(currFace->GetSurface());
-            double x, y, z;
-            surface->GetPoint(surface->GetParamUMax(), surface->GetParamVMax(), &x, &y, &z);
-            if (abs((planeEq.a * x) + (planeEq.b * y) + (planeEq.c * z) + planeEq.d) < PLANE_BORDER_EPS) {
+            PlaneEq currPlaneEq(currFace);
+            if (currPlaneEq.equals(planeEq)) {
                 std::cout << "Ќайдена поверхность в плоскости печати \n";
                 ksEntityPtr chamferEntity(part->NewEntity(o3d_chamfer));
                 ksChamferDefinitionPtr chamfer(chamferEntity->GetDefinition());
