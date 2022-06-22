@@ -8,6 +8,33 @@
 #import "ksConstants3D.tlb" no_namespace named_guids
 #import "kAPI5.tlb" no_namespace named_guids rename( "min", "Imin" ) rename( "max", "Imax" ) rename( "ksFragmentLibrary", "ksIFragmentLibrary" )
 
+bool loopIsCircle(ksLoopPtr loop) {
+    ksEdgeCollectionPtr edges(loop->EdgeCollection());
+    int edgesCount = edges->GetCount();
+    if (edgesCount != 1) {
+        return false;
+    }
+    ksEdgeDefinitionPtr edge(edges->GetByIndex(0));
+    if (!edge->IsCircle()) {
+        return false;
+    }
+    return true;
+}
+
+bool checkFaceWithHole(ksFaceDefinitionPtr face, ksFaceDefinitionPtr printFace, ksMeasurerPtr measurer) {
+    if (!face->IsPlanar() || (face == printFace)) {
+        return false;
+    }
+    measurer->SetObject1(printFace);
+    measurer->SetObject2(face);
+    measurer->Calc();
+    double angle = measurer->angle;
+    if (!(doubleEqual(angle, 0.0) || doubleEqual(angle, 180))) {
+        return false;
+    }
+    return true;
+}
+
 bool isHoleDirect(ksLoopPtr loop, ksFaceDefinitionPtr printFace, ksMeasurerPtr measurer) {
     ksEdgeCollectionPtr edges(loop->EdgeCollection());
     int edgesCount = edges->GetCount();
@@ -77,25 +104,18 @@ bool checkHoleLoop(ksLoopPtr loop, ksFaceDefinitionPtr printFace, ksMeasurerPtr 
     return false;
 }
 
-std::list<BridgeHoleTarget> getBridgeHoleTargets(ksPartPtr part, ksFaceDefinitionPtr printFace, HoleType holeType) {
+std::list<BridgeHoleFillTarget> getBridgeHoleFillTargets(ksPartPtr part, ksFaceDefinitionPtr printFace, HoleType holeType) {
     ksMeasurerPtr measurer(part->GetMeasurer());
 
     ksBodyPtr body = part->GetMainBody();
     ksFaceCollectionPtr faces = body->FaceCollection();
     int facesCount = faces->GetCount();
 
-    std::list<BridgeHoleTarget> bridgeHoleTargets;
+    std::list<BridgeHoleFillTarget> bridgeHoleFillTargets;
 
     for (int faceIndex = 0; faceIndex < facesCount; faceIndex++) {
         ksFaceDefinitionPtr face = faces->GetByIndex(faceIndex);
-        if (!face->IsPlanar() || (face == printFace)) {
-            continue;
-        }
-        measurer->SetObject1(printFace);
-        measurer->SetObject2(face);
-        measurer->Calc();
-        double angle = measurer->angle;
-        if (!(doubleEqual(angle, 0.0) || doubleEqual(angle, 180))) {
+        if (!checkFaceWithHole(face, printFace, measurer)) {
             continue;
         }
 
@@ -106,34 +126,26 @@ std::list<BridgeHoleTarget> getBridgeHoleTargets(ksPartPtr part, ksFaceDefinitio
                 continue;
             }
 
-            if (holeType != HoleType::ALL) {
-                ksEdgeCollectionPtr edges(innerLoop->EdgeCollection());
-                int edgesCount = edges->GetCount();
-                if (holeType == HoleType::CIRCLE) {
-                    if (edgesCount != 1) {
-                        continue;
-                    }
-                    ksEdgeDefinitionPtr edge(edges->GetByIndex(0));
-                    if (!edge->IsCircle()) {
-                        continue;
-                    }
-                } else if (holeType == HoleType::NOT_CIRCLE) {
-                    if (edgesCount == 1) {
-                        continue;
-                    }
+            if (holeType == HoleType::CIRCLE) {
+                if (!loopIsCircle(innerLoop)) {
+                    continue;
+                }
+            } else if (holeType == HoleType::NOT_CIRCLE) {
+                if (loopIsCircle(innerLoop)) {
+                    continue;
                 }
             }
 
             if (checkHoleLoop(innerLoop, printFace, measurer)) {
-                bridgeHoleTargets.push_back(BridgeHoleTarget{ innerLoop, face });
+                bridgeHoleFillTargets.push_back(BridgeHoleFillTarget{ innerLoop, face });
             }
         }
     }
-    return bridgeHoleTargets;
+    return bridgeHoleFillTargets;
 }
 
-void fillBridgeHoles(ksPartPtr part, std::list<BridgeHoleTarget> bridgeHoleTargets, double extrusionDepth) {
-    for (BridgeHoleTarget target : bridgeHoleTargets) {
+void fillBridgeHoles(ksPartPtr part, std::list<BridgeHoleFillTarget> bridgeHoleFillTargets, double extrusionDepth) {
+    for (BridgeHoleFillTarget target : bridgeHoleFillTargets) {
         ksEntityPtr sketchEntity(part->NewEntity(o3d_sketch));
         ksSketchDefinitionPtr sketchDef(sketchEntity->GetDefinition());
         sketchDef->SetPlane(target.face);
@@ -157,16 +169,81 @@ void fillBridgeHoles(ksPartPtr part, std::list<BridgeHoleTarget> bridgeHoleTarge
     }
 }
 
-void buildBridgeHoles(ksPartPtr part, std::list<BridgeHoleTarget> bridgeHoleTargets, double stepDepth) {
-    
+std::list<BridgeHoleBuildTarget> getBridgeHoleBuildTargets(ksPartPtr part, ksFaceDefinitionPtr printFace) {
+    ksMeasurerPtr measurer(part->GetMeasurer());
+
+    ksBodyPtr body = part->GetMainBody();
+    ksFaceCollectionPtr faces = body->FaceCollection();
+    int facesCount = faces->GetCount();
+
+    std::list<BridgeHoleBuildTarget> bridgeHoleBuildTargets;
+
+    for (int faceIndex = 0; faceIndex < facesCount; faceIndex++) {
+        ksFaceDefinitionPtr face = faces->GetByIndex(faceIndex);
+        if (!checkFaceWithHole(face, printFace, measurer)) {
+            continue;
+        }
+
+        ksLoopCollectionPtr loops(face->LoopCollection());
+        int loopsCount = loops->GetCount();
+
+        if (loopsCount != 2) {
+            continue;
+        }
+
+        ksLoopPtr testLoop(loops->GetByIndex(0));
+        ksLoopPtr innerLoop, outerLoop;
+        if (testLoop->IsOuter()) {
+            outerLoop = testLoop;
+            innerLoop = loops->GetByIndex(1);
+        } else {
+            innerLoop = testLoop;
+            outerLoop = loops->GetByIndex(1);
+        }
+
+        if (!loopIsCircle(innerLoop)) {
+            continue;
+        }
+
+        if (checkHoleLoop(innerLoop, printFace, measurer)) {
+            bridgeHoleBuildTargets.push_back(BridgeHoleBuildTarget{ innerLoop, outerLoop, face });
+        }
+    }
+    return bridgeHoleBuildTargets;
+}
+
+void buildBridgeHoles(ksPartPtr part, std::list<BridgeHoleBuildTarget> bridgeHoleBuildTargets, double stepDepth) {
+    for (BridgeHoleBuildTarget target : bridgeHoleBuildTargets) {
+        ksEntityPtr sketchEntity(part->NewEntity(o3d_sketch));
+        ksSketchDefinitionPtr sketchDef(sketchEntity->GetDefinition());
+        sketchDef->SetPlane(target.face);
+        sketchEntity->Create();
+
+        sketchDef->BeginEdit();
+
+        if (!loopIsCircle(target.innerLoop)) {
+            continue;
+        }
+        ksEdgeCollectionPtr innerEdges(target.innerLoop->EdgeCollection());
+        ksEdgeDefinitionPtr innerEdge(innerEdges->GetByIndex(0));
+        sketchDef->AddProjectionOf(innerEdge);
+
+        ksEdgeCollectionPtr outerEdges(target.outerLoop->EdgeCollection());
+        for (int outerEdgeIndex = 0; outerEdgeIndex < outerEdges->GetCount(); outerEdgeIndex++) {
+            ksEdgeDefinitionPtr outerEdge(outerEdges->GetByIndex(outerEdgeIndex));
+            sketchDef->AddProjectionOf(outerEdge);
+        }
+        
+        sketchDef->EndEdit();
+    }
 }
 
 void bridgeHoleFillOptimization(ksPartPtr part, ksFaceDefinitionPtr printFace, double extrusionDepth, HoleType holeType) {
-    std::list<BridgeHoleTarget> targets = getBridgeHoleTargets(part, printFace, holeType);
+    std::list<BridgeHoleFillTarget> targets = getBridgeHoleFillTargets(part, printFace, holeType);
     fillBridgeHoles(part, targets, extrusionDepth);
 }
 
 void bridgeHoleBuildOptimization(ksPartPtr part, ksFaceDefinitionPtr printFace, double stepDepth) {
-    std::list<BridgeHoleTarget> targets = getBridgeHoleTargets(part, printFace, HoleType::CIRCLE);
+    std::list<BridgeHoleBuildTarget> targets = getBridgeHoleBuildTargets(part, printFace);
     buildBridgeHoles(part, targets, stepDepth);
 }

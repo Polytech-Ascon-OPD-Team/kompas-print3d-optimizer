@@ -5,8 +5,14 @@
 
 #import "kAPI5.tlb" no_namespace named_guids rename( "min", "Imin" ) rename( "max", "Imax" ) rename( "ksFragmentLibrary", "ksIFragmentLibrary" )
 
-struct BridgeHoleTarget {
+struct BridgeHoleFillTarget {
     ksLoopPtr loop;
+    ksFaceDefinitionPtr face;
+};
+
+struct BridgeHoleBuildTarget {
+    ksLoopPtr innerLoop;
+    ksLoopPtr outerLoop;
     ksFaceDefinitionPtr face;
 };
 
@@ -16,11 +22,16 @@ enum class HoleType {
     ALL,
 };
 
-bool checkHoleLoop(ksLoopPtr loop, ksFaceDefinitionPtr printFace, ksMeasurerPtr measurer);
-std::list<BridgeHoleTarget> getBridgeHoleTargets(ksPartPtr part, ksFaceDefinitionPtr printFace, HoleType holeType);
-void fillBridgeHoles(ksPartPtr part, std::list<BridgeHoleTarget> bridgeHoleTargets, double extrusionDepth);
+bool loopIsCircle(ksLoopPtr loop);
+bool checkFaceWithHole(ksFaceDefinitionPtr face, ksFaceDefinitionPtr printFace, ksMeasurerPtr measurer);
+bool isHoleDirect(ksLoopPtr loop, ksFaceDefinitionPtr printFace, ksMeasurerPtr measurer);
 
-void buildBridgeHoles(ksPartPtr part, std::list<BridgeHoleTarget> bridgeHoleTargets, double stepDepth);
+bool checkHoleLoop(ksLoopPtr loop, ksFaceDefinitionPtr printFace, ksMeasurerPtr measurer);
+std::list<BridgeHoleFillTarget> getBridgeHoleFillTargets(ksPartPtr part, ksFaceDefinitionPtr printFace, HoleType holeType);
+void fillBridgeHoles(ksPartPtr part, std::list<BridgeHoleFillTarget> bridgeHoleTargets, double extrusionDepth);
+
+std::list<BridgeHoleBuildTarget> getBridgeHoleBuildTargets(ksPartPtr part, ksFaceDefinitionPtr printFace);
+void buildBridgeHoles(ksPartPtr part, std::list<BridgeHoleBuildTarget> bridgeHoleTargets, double stepDepth);
 
 void bridgeHoleFillOptimization(ksPartPtr part, ksFaceDefinitionPtr printFace, double extrusionDepth, HoleType holeType);
 void bridgeHoleBuildOptimization(ksPartPtr part, ksFaceDefinitionPtr printFace, double stepDepth);
