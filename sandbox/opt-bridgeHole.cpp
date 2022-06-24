@@ -1,12 +1,14 @@
 #include "opt-bridgeHole.hpp"
 
 #include <list>
+#include <iostream>
 
 #include "utils.hpp"
 
 #import "ksconstants.tlb" no_namespace named_guids
 #import "ksConstants3D.tlb" no_namespace named_guids
 #import "kAPI5.tlb" no_namespace named_guids rename( "min", "Imin" ) rename( "max", "Imax" ) rename( "ksFragmentLibrary", "ksIFragmentLibrary" )
+#import "kAPI7.tlb" no_namespace named_guids rename( "CreateWindow", "ICreateWindow" ) rename( "PostMessage", "IPostMessage" ) rename( "MessageBoxEx", "IMessageBoxEx" )
 
 bool loopIsCircle(ksLoopPtr loop) {
     ksEdgeCollectionPtr edges(loop->EdgeCollection());
@@ -212,29 +214,208 @@ std::list<BridgeHoleBuildTarget> getBridgeHoleBuildTargets(ksPartPtr part, ksFac
     return bridgeHoleBuildTargets;
 }
 
-void buildBridgeHoles(ksPartPtr part, std::list<BridgeHoleBuildTarget> bridgeHoleBuildTargets, double stepDepth) {
+void buildBridgeHole1Circle(ksSketchDefinitionPtr sketchDef, IDrawingContainerPtr drawingContainer, BridgeHoleBuildTarget target, double stepDepth) {
+    // Проецируем окружности
+    ksEdgeCollectionPtr innerEdges(target.innerLoop->EdgeCollection());
+    ksEdgeDefinitionPtr innerEdge(innerEdges->GetByIndex(0));
+    sketchDef->AddProjectionOf(innerEdge);
+
+    ICirclesPtr circles(drawingContainer->Circles);
+    ICirclePtr innerCircle(circles->GetCircle(0));
+    innerCircle->Style = ksCurveStyleEnum::ksCSThin;
+    innerCircle->Update();
+
+    ksEdgeCollectionPtr outerEdges(target.outerLoop->EdgeCollection());
+    ksEdgeDefinitionPtr outerEdge(outerEdges->GetByIndex(0));
+    sketchDef->AddProjectionOf(outerEdge);
+
+    ICirclePtr outerCircle;
+    circles = drawingContainer->Circles;
+    for (int circleIndex = 0; circleIndex < circles->Count; circleIndex++) {
+        ICirclePtr circle(circles->GetCircle(circleIndex));
+        if (circle != innerCircle) {
+            outerCircle = circle;
+        }
+    }
+    outerCircle->Style = ksCurveStyleEnum::ksCSThin;
+    outerCircle->Update();
+
+    // Устанавливаем ограничения
+    ILineSegmentsPtr lineSegments(drawingContainer->LineSegments);
+    ILineSegmentPtr lineSegment1(lineSegments->Add());
+    lineSegment1->X1 = innerCircle->Xc + 1; lineSegment1->Y1 = innerCircle->Yc - 1;
+    lineSegment1->X2 = innerCircle->Xc - 1; lineSegment1->Y2 = innerCircle->Yc - 1;
+    lineSegment1->Update();
+    IDrawingObjectPtr lineSegment1DrawingObject(lineSegment1);
+    IDrawingObject1Ptr lineSegment1DrawingObject1(lineSegment1DrawingObject);
+    {
+        IParametriticConstraintPtr constraint(lineSegment1DrawingObject1->NewConstraint());
+        constraint->ConstraintType = ksCPointOnCurve;
+        constraint->Index = 0;
+        constraint->Partner = static_cast<IDispatch*>(outerCircle);
+        constraint->Create();
+    }
+    {
+        IParametriticConstraintPtr constraint(lineSegment1DrawingObject1->NewConstraint());
+        constraint->ConstraintType = ksCPointOnCurve;
+        constraint->Index = 1;
+        constraint->Partner = static_cast<IDispatch*>(outerCircle);
+        constraint->Create();
+    }
+    {
+        IParametriticConstraintPtr constraint(lineSegment1DrawingObject1->NewConstraint());
+        constraint->ConstraintType = ksCHorizontal;
+        constraint->Create();
+    }
+    {
+        IParametriticConstraintPtr constraint(lineSegment1DrawingObject1->NewConstraint());
+        constraint->ConstraintType = ksCTangentTwoCurves;
+        constraint->Partner = static_cast<IDispatch*>(innerCircle);
+        constraint->Create();
+    }
+
+    ILineSegmentPtr lineSegment2(lineSegments->Add());
+    lineSegment2->X1 = innerCircle->Xc + 1; lineSegment2->Y1 = innerCircle->Yc + 1;
+    lineSegment2->X2 = innerCircle->Xc - 1; lineSegment2->Y2 = innerCircle->Yc + 1;
+    lineSegment2->Update();
+    IDrawingObjectPtr lineSegment2DrawingObject(lineSegment2);
+    IDrawingObject1Ptr lineSegment2DrawingObject1(lineSegment2DrawingObject);
+    {
+        IParametriticConstraintPtr constraint(lineSegment2DrawingObject1->NewConstraint());
+        constraint->ConstraintType = ksCPointOnCurve;
+        constraint->Index = 0;
+        constraint->Partner = static_cast<IDispatch*>(outerCircle);
+        constraint->Create();
+    }
+    {
+        IParametriticConstraintPtr constraint(lineSegment2DrawingObject1->NewConstraint());
+        constraint->ConstraintType = ksCPointOnCurve;
+        constraint->Index = 1;
+        constraint->Partner = static_cast<IDispatch*>(outerCircle);
+        constraint->Create();
+    }
+    {
+        IParametriticConstraintPtr constraint(lineSegment2DrawingObject1->NewConstraint());
+        constraint->ConstraintType = ksCParallel;
+        constraint->Partner = static_cast<IDispatch*>(lineSegment1);
+        constraint->Create();
+    }
+    {
+        IParametriticConstraintPtr constraint(lineSegment2DrawingObject1->NewConstraint());
+        constraint->ConstraintType = ksCTangentTwoCurves;
+        constraint->Partner = static_cast<IDispatch*>(innerCircle);
+        constraint->Create();
+    }
+
+    // Рисуем дуги
+    {
+        IArcsPtr arcs(drawingContainer->Arcs);
+        IArcPtr arc(arcs->Add());
+        arc->Xc = outerCircle->Xc; arc->Yc = outerCircle->Yc;
+        arc->Radius = outerCircle->Radius;
+        arc->X1 = lineSegment1->X1; arc->Y1 = lineSegment1->Y1;
+        arc->X2 = lineSegment2->X1; arc->Y2 = lineSegment2->Y1;
+        arc->Direction = false;
+        arc->Update();
+
+        IDrawingObjectPtr arcDrawingObject(arc);
+        IDrawingObject1Ptr arcDrawingObject1(arcDrawingObject);
+        {
+            IParametriticConstraintPtr constraint(arcDrawingObject1->NewConstraint());
+            constraint->ConstraintType = ksCMergePoints;
+            constraint->Index = 0;
+            constraint->Partner = static_cast<IDispatch*>(outerCircle);
+            constraint->PartnerIndex = 0;
+            constraint->Create();
+        }
+        {
+            IParametriticConstraintPtr constraint(arcDrawingObject1->NewConstraint());
+            constraint->ConstraintType = ksCMergePoints;
+            constraint->Index = 1;
+            constraint->Partner = static_cast<IDispatch*>(lineSegment1);
+            constraint->PartnerIndex = 0;
+            constraint->Create();
+        }
+        {
+            IParametriticConstraintPtr constraint(arcDrawingObject1->NewConstraint());
+            constraint->ConstraintType = ksCMergePoints;
+            constraint->Index = 2;
+            constraint->Partner = static_cast<IDispatch*>(lineSegment2);
+            constraint->PartnerIndex = 0;
+            constraint->Create();
+        }
+    }
+    {
+        IArcsPtr arcs(drawingContainer->Arcs);
+        IArcPtr arc(arcs->Add());
+        arc->Xc = outerCircle->Xc; arc->Yc = outerCircle->Yc;
+        arc->Radius = outerCircle->Radius;
+        arc->X1 = lineSegment1->X2; arc->Y1 = lineSegment1->Y2;
+        arc->X2 = lineSegment2->X2; arc->Y2 = lineSegment2->Y2;
+        arc->Direction = true;
+        arc->Update();
+
+        IDrawingObjectPtr arcDrawingObject(arc);
+        IDrawingObject1Ptr arcDrawingObject1(arcDrawingObject);
+        {
+            IParametriticConstraintPtr constraint(arcDrawingObject1->NewConstraint());
+            constraint->ConstraintType = ksCMergePoints;
+            constraint->Index = 0;
+            constraint->Partner = static_cast<IDispatch*>(outerCircle);
+            constraint->PartnerIndex = 0;
+            constraint->Create();
+        }
+        {
+            IParametriticConstraintPtr constraint(arcDrawingObject1->NewConstraint());
+            constraint->ConstraintType = ksCMergePoints;
+            constraint->Index = 1;
+            constraint->Partner = static_cast<IDispatch*>(lineSegment1);
+            constraint->PartnerIndex = 1;
+            constraint->Create();
+        }
+        {
+            IParametriticConstraintPtr constraint(arcDrawingObject1->NewConstraint());
+            constraint->ConstraintType = ksCMergePoints;
+            constraint->Index = 2;
+            constraint->Partner = static_cast<IDispatch*>(lineSegment2);
+            constraint->PartnerIndex = 1;
+            constraint->Create();
+        }
+    }
+
+}
+
+void buildBridgeHole1(KompasObjectPtr kompas, ksPartPtr part, BridgeHoleBuildTarget target, double stepDepth) {
+    ksEntityPtr sketchEntity(part->NewEntity(o3d_sketch));
+    ksSketchDefinitionPtr sketchDef(sketchEntity->GetDefinition());
+    sketchDef->SetPlane(target.face);
+    sketchEntity->Create();
+
+    ksDocument2DPtr sketchEdit(sketchDef->BeginEdit());
+
+    IKompasDocument2DPtr sketchEdit_api7(kompas->TransferInterface(sketchEdit, ksAPI7Dual, 0));
+    IViewsAndLayersManagerPtr viewsAndLayersManager(sketchEdit_api7->ViewsAndLayersManager);
+    IViewsPtr views(viewsAndLayersManager->Views);
+    IViewPtr view(views->ActiveView);
+    IDrawingContainerPtr drawingContainer(view);
+
+    if (!loopIsCircle(target.innerLoop)) {
+        return;
+    }
+
+    if (loopIsCircle(target.outerLoop)) {
+        buildBridgeHole1Circle(sketchDef, drawingContainer, target, stepDepth);
+
+    }
+
+    sketchDef->EndEdit();
+}
+
+void buildBridgeHoles(KompasObjectPtr kompas, ksPartPtr part, std::list<BridgeHoleBuildTarget> bridgeHoleBuildTargets, double stepDepth) {
     for (BridgeHoleBuildTarget target : bridgeHoleBuildTargets) {
-        ksEntityPtr sketchEntity(part->NewEntity(o3d_sketch));
-        ksSketchDefinitionPtr sketchDef(sketchEntity->GetDefinition());
-        sketchDef->SetPlane(target.face);
-        sketchEntity->Create();
+        buildBridgeHole1(kompas, part, target, stepDepth);
 
-        sketchDef->BeginEdit();
 
-        if (!loopIsCircle(target.innerLoop)) {
-            continue;
-        }
-        ksEdgeCollectionPtr innerEdges(target.innerLoop->EdgeCollection());
-        ksEdgeDefinitionPtr innerEdge(innerEdges->GetByIndex(0));
-        sketchDef->AddProjectionOf(innerEdge);
-
-        ksEdgeCollectionPtr outerEdges(target.outerLoop->EdgeCollection());
-        for (int outerEdgeIndex = 0; outerEdgeIndex < outerEdges->GetCount(); outerEdgeIndex++) {
-            ksEdgeDefinitionPtr outerEdge(outerEdges->GetByIndex(outerEdgeIndex));
-            sketchDef->AddProjectionOf(outerEdge);
-        }
-        
-        sketchDef->EndEdit();
     }
 }
 
@@ -243,7 +424,7 @@ void bridgeHoleFillOptimization(ksPartPtr part, ksFaceDefinitionPtr printFace, d
     fillBridgeHoles(part, targets, extrusionDepth);
 }
 
-void bridgeHoleBuildOptimization(ksPartPtr part, ksFaceDefinitionPtr printFace, double stepDepth) {
+void bridgeHoleBuildOptimization(KompasObjectPtr kompas, ksPartPtr part, ksFaceDefinitionPtr printFace, double stepDepth) {
     std::list<BridgeHoleBuildTarget> targets = getBridgeHoleBuildTargets(part, printFace);
-    buildBridgeHoles(part, targets, stepDepth);
+    buildBridgeHoles(kompas, part, targets, stepDepth);
 }
