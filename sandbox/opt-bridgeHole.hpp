@@ -25,15 +25,22 @@ enum class HoleType {
 bool loopIsCircle(ksLoopPtr loop);
 bool checkFaceWithHole(ksFaceDefinitionPtr face, ksFaceDefinitionPtr printFace, ksMeasurerPtr measurer);
 bool isHoleDirect(ksLoopPtr loop, ksFaceDefinitionPtr printFace, ksMeasurerPtr measurer);
-
 bool checkHoleLoop(ksLoopPtr loop, ksFaceDefinitionPtr printFace, ksMeasurerPtr measurer);
+
 std::list<BridgeHoleFillTarget> getBridgeHoleFillTargets(ksPartPtr part, ksFaceDefinitionPtr printFace, HoleType holeType);
 void fillBridgeHoles(ksPartPtr part, std::list<BridgeHoleFillTarget> bridgeHoleTargets, double extrusionDepth);
-
-std::list<BridgeHoleBuildTarget> getBridgeHoleBuildTargets(ksPartPtr part, ksFaceDefinitionPtr printFace);
-void buildBridgeHoles(KompasObjectPtr kompas, ksPartPtr part, std::list<BridgeHoleBuildTarget> bridgeHoleTargets, double stepDepth);
-
 void bridgeHoleFillOptimization(ksPartPtr part, ksFaceDefinitionPtr printFace, double extrusionDepth, HoleType holeType);
+
+bool isOuterLoopForBuild(ksLoopPtr loop);
+std::list<BridgeHoleBuildTarget> getBridgeHoleBuildTargets(ksPartPtr part, ksFaceDefinitionPtr printFace);
+ksEntityPtr bridgeHoleBuildCircleDrawSketch1(KompasObjectPtr kompas, ksPartPtr part, BridgeHoleBuildTarget target,
+        double* xc, double* yc, double* radius);
+ksEntityPtr bridgeHoleBuildNotCircleDrawSketch1(KompasObjectPtr kompas, ksPartPtr part, BridgeHoleBuildTarget target,
+        double* xc, double* yc, double* radius);
+void buildBridgeHole1(ksEntityPtr sketchEntity, ksPartPtr part, double stepDepth);
+void buildBridgeHole2(KompasObjectPtr kompas, ksPartPtr part, BridgeHoleBuildTarget target, double stepDepth,
+        int count, double xc, double yc, double radius);
+void buildBridgeHoles(KompasObjectPtr kompas, ksPartPtr part, std::list<BridgeHoleBuildTarget> bridgeHoleTargets, double stepDepth);
 void bridgeHoleBuildOptimization(KompasObjectPtr kompas, ksPartPtr part, ksFaceDefinitionPtr printFace, double stepDepth);
 
 #endif /* OPT_BRIDGE_HOLE_HPP */

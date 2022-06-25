@@ -1,7 +1,6 @@
 #include "opt-bridgeHole.hpp"
 
 #include <list>
-#include <iostream>
 
 #include "utils.hpp"
 
@@ -180,6 +179,20 @@ void bridgeHoleFillOptimization(ksPartPtr part, ksFaceDefinitionPtr printFace, d
 
 /* Достройка нависающих отверстий для печати мостами */
 
+bool isOuterLoopForBuild(ksLoopPtr loop) {
+    if (loopIsCircle(loop)) {
+        return true;
+    }
+    ksEdgeCollectionPtr edges(loop->EdgeCollection());
+    for (int edgeIndex = 0; edgeIndex < edges->GetCount(); edgeIndex++) {
+        ksEdgeDefinitionPtr edge(edges->GetByIndex(edgeIndex));
+        if (!edge->IsStraight()) {
+            return false;
+        }
+    }
+    return true;
+}
+
 std::list<BridgeHoleBuildTarget> getBridgeHoleBuildTargets(ksPartPtr part, ksFaceDefinitionPtr printFace) {
     ksMeasurerPtr measurer(part->GetMeasurer());
 
@@ -212,7 +225,7 @@ std::list<BridgeHoleBuildTarget> getBridgeHoleBuildTargets(ksPartPtr part, ksFac
             outerLoop = loops->GetByIndex(1);
         }
 
-        if (!loopIsCircle(innerLoop)) {
+        if (!loopIsCircle(innerLoop) || !isOuterLoopForBuild(outerLoop)) {
             continue;
         }
 
@@ -411,6 +424,198 @@ ksEntityPtr bridgeHoleBuildCircleDrawSketch1(KompasObjectPtr kompas, ksPartPtr p
     return sketchEntity;
 }
 
+ksEntityPtr bridgeHoleBuildNotCircleDrawSketch1(KompasObjectPtr kompas, ksPartPtr part, BridgeHoleBuildTarget target,
+        double* xc, double* yc, double* radius) {
+
+    // TODO Алгоритм нужно оптимизировать
+
+    ksEntityPtr sketchEntity(part->NewEntity(o3d_sketch));
+    ksSketchDefinitionPtr sketchDef(sketchEntity->GetDefinition());
+    sketchDef->SetPlane(target.face);
+    sketchEntity->Create();
+
+    ksDocument2DPtr sketchEdit(sketchDef->BeginEdit());
+    IKompasDocument2DPtr sketchEdit_api7(kompas->TransferInterface(sketchEdit, ksAPI7Dual, 0));
+
+    IViewsAndLayersManagerPtr viewsAndLayersManager(sketchEdit_api7->ViewsAndLayersManager);
+    IViewsPtr views(viewsAndLayersManager->Views);
+    IViewPtr view(views->ActiveView);
+    IDrawingContainerPtr drawingContainer(view);
+
+    ksEdgeCollectionPtr innerEdges(target.innerLoop->EdgeCollection());
+    ksEdgeDefinitionPtr innerEdge(innerEdges->GetByIndex(0));
+    sketchDef->AddProjectionOf(innerEdge);
+
+    ICirclesPtr circles(drawingContainer->Circles);
+    ICirclePtr innerCircle(circles->GetCircle(0));
+    innerCircle->Style = ksCurveStyleEnum::ksCSThin;
+    innerCircle->Update();
+
+    *xc = innerCircle->Xc; *yc = innerCircle->Yc; *radius = innerCircle->Radius;
+
+    // TODO Все что выше повторяется в другой функции ...
+
+    ksEdgeCollectionPtr outerEdges(target.outerLoop->EdgeCollection());
+    int outerEdgesCount = outerEdges->GetCount();
+    for (int outerEdgeIndex = 0; outerEdgeIndex < outerEdgesCount; outerEdgeIndex++) {
+        ksEdgeDefinitionPtr edge(outerEdges->GetByIndex(outerEdgeIndex));
+        sketchDef->AddProjectionOf(edge);
+    }
+
+    double yMin = *yc - *radius, yMax = *yc + *radius;
+
+    // Отрезки, в которых одна точка вне промежутка, другая в промежутке
+    std::list<ILineSegmentPtr> lineSegmentList;
+
+    // Точки для достраивания отрезков
+    std::list<double> pointsMin; // x'ы точек на линии yMin
+    std::list<double> pointsMax; // x'ы точек на линии yMax
+
+    ILineSegmentsPtr lineSegments(drawingContainer->LineSegments);
+    for (int lineSegmentIndex = 0; lineSegmentIndex < lineSegments->Count; lineSegmentIndex++) {
+        ILineSegmentPtr lineSegment(lineSegments->GetLineSegment(lineSegmentIndex));
+        
+        // Отрезок полностью вне промежутка
+        if (((lineSegment->Y1 <= yMin) && (lineSegment->Y2 <= yMin)) ||
+                ((lineSegment->Y1 >= yMax) && (lineSegment->Y2 >= yMax))) {
+            lineSegment->Style = ksCurveStyleEnum::ksCSThin;
+            lineSegment->Update();
+            continue;
+        }
+
+        // Одна точка отрезка вне промежутка, другая в промежутке
+        if ((((lineSegment->Y1 > yMin) && (lineSegment->Y1 < yMax)) && ((lineSegment->Y2 < yMin) || (lineSegment->Y2 > yMax))) ||
+                (((lineSegment->Y2 > yMin) && (lineSegment->Y2 < yMax)) && ((lineSegment->Y1 < yMin) || (lineSegment->Y1 > yMax)))) {
+            lineSegment->Style = ksCurveStyleEnum::ksCSThin;
+            lineSegment->Update();
+            lineSegmentList.push_back(lineSegment);
+        }
+
+        // Отрезок пересекает промежуток
+        if (((lineSegment->Y1 < yMin) && (lineSegment->Y2 > yMax)) ||
+                ((lineSegment->Y2 < yMin) && (lineSegment->Y1 > yMax))) {
+            lineSegment->Style = ksCurveStyleEnum::ksCSThin;
+            lineSegment->Update();
+            lineSegmentList.push_back(lineSegment);
+        }
+
+        // Одна из точек отрезка лежит на линии yMin или yMax
+        if (doubleEqual(lineSegment->Y1, yMin)) { pointsMin.push_back(lineSegment->X1); }
+        if (doubleEqual(lineSegment->Y2, yMin)) { pointsMin.push_back(lineSegment->X2); }
+        if (doubleEqual(lineSegment->Y1, yMax)) { pointsMax.push_back(lineSegment->X1); }
+        if (doubleEqual(lineSegment->Y2, yMax)) { pointsMax.push_back(lineSegment->X2); }
+    }
+
+    // Строим вспомогательные линии
+    ILinesPtr lines(drawingContainer->Lines);
+    ILinePtr line1(lines->Add());
+    line1->X1 = *xc + 1; line1->Y1 = yMin;
+    line1->X2 = *xc - 1; line1->Y2 = yMin;
+    line1->Update();
+    IDrawingObjectPtr line1DrawingObject(line1);
+    IDrawingObject1Ptr line1DrawingObject1(line1DrawingObject);
+    {
+        IParametriticConstraintPtr constraint(line1DrawingObject1->NewConstraint());
+        constraint->ConstraintType = ksCHorizontal;
+        constraint->Create();
+    }
+    {
+        IParametriticConstraintPtr constraint(line1DrawingObject1->NewConstraint());
+        constraint->ConstraintType = ksCTangentTwoCurves;
+        constraint->Partner = static_cast<IDispatch*>(innerCircle);
+        constraint->Create();
+    }
+
+    ILinePtr line2(lines->Add());
+    line2->X1 = *xc + 1; line2->Y1 = yMax;
+    line2->X2 = *xc - 1; line2->Y2 = yMax;
+    line2->Update();
+    IDrawingObjectPtr line2DrawingObject(line2);
+    IDrawingObject1Ptr line2DrawingObject1(line2DrawingObject);
+    {
+        IParametriticConstraintPtr constraint(line2DrawingObject1->NewConstraint());
+        constraint->ConstraintType = ksCHorizontal;
+        constraint->Create();
+    }
+    {
+        IParametriticConstraintPtr constraint(line2DrawingObject1->NewConstraint());
+        constraint->ConstraintType = ksCTangentTwoCurves;
+        constraint->Partner = static_cast<IDispatch*>(innerCircle);
+        constraint->Create();
+    }
+
+    // Строим части прямых, лежащие в нужной области
+    ksMathematic2DPtr math2d = kompas->GetMathematic2D();
+    for (ILineSegmentPtr lineSegment : lineSegmentList) {
+        ksDynamicArrayPtr dynArr1(kompas->GetDynamicArray(2)); // Точка
+        ksDynamicArrayPtr dynArr2(kompas->GetDynamicArray(2));
+        int res1 = math2d->ksIntersectCurvCurv(lineSegment->GetReference(), line1->GetReference(), dynArr1);
+        int res2 = math2d->ksIntersectCurvCurv(lineSegment->GetReference(), line2->GetReference(), dynArr2);
+        
+        if ((res1 == 1) && (res2 == 1)) {
+            ksMathPointParamPtr point1 = kompas->GetParamStruct(ko_MathPointParam);
+            dynArr1->ksGetArrayItem(0, point1);
+            ksMathPointParamPtr point2 = kompas->GetParamStruct(ko_MathPointParam);
+            dynArr2->ksGetArrayItem(0, point2);
+
+            ILineSegmentPtr newLineSegment(lineSegments->Add());
+            newLineSegment->X1 = point1->x; newLineSegment->Y1 = point1->y;
+            newLineSegment->X2 = point2->x; newLineSegment->Y2 = point2->y;
+            newLineSegment->Update();
+
+            pointsMin.push_back(point1->x);
+            pointsMax.push_back(point2->x);
+
+            continue;
+        }
+
+        ksMathPointParamPtr point = kompas->GetParamStruct(ko_MathPointParam);
+        if (res1 == 1) {
+            dynArr1->ksGetArrayItem(0, point);
+            pointsMin.push_back(point->x);
+        } else {
+            dynArr2->ksGetArrayItem(0, point);
+            pointsMax.push_back(point->x);
+        }
+
+        ILineSegmentPtr newLineSegment(lineSegments->Add());
+
+        if ((lineSegment->Y1 > yMin) && (lineSegment->Y1 < yMax)) {
+            newLineSegment->X1 = lineSegment->X1; newLineSegment->Y1 = lineSegment->Y1;
+        } else {
+            newLineSegment->X1 = lineSegment->X2; newLineSegment->Y1 = lineSegment->Y2;
+        }
+        newLineSegment->X2 = point->x; newLineSegment->Y2 = point->y;
+        newLineSegment->Update();
+
+    }
+
+    // Достраиваем отрезки
+    if ((pointsMin.size() % 2 == 0) && (pointsMax.size() % 2 == 0)) { // Размеры всегда должны быть четными
+        pointsMin.sort();
+        pointsMax.sort();
+
+        for (std::list<double>::const_iterator it = pointsMin.cbegin(); it != pointsMin.cend(); it++) {
+            ILineSegmentPtr newLineSegment(lineSegments->Add());
+            newLineSegment->X1 = *it; newLineSegment->Y1 = yMin;
+            it++;
+            newLineSegment->X2 = *it; newLineSegment->Y2 = yMin;
+            newLineSegment->Update();
+        }
+
+        for (std::list<double>::const_iterator it = pointsMax.cbegin(); it != pointsMax.cend(); it++) {
+            ILineSegmentPtr newLineSegment(lineSegments->Add());
+            newLineSegment->X1 = *it; newLineSegment->Y1 = yMax;
+            it++;
+            newLineSegment->X2 = *it; newLineSegment->Y2 = yMax;
+            newLineSegment->Update();
+        }
+    }
+
+    sketchDef->EndEdit();
+    return sketchEntity;
+}
+
 void buildBridgeHole1(ksEntityPtr sketchEntity, ksPartPtr part, double stepDepth) {
     // Выдавливаем эскиз
     ksEntityPtr extrusionEntity(part->NewEntity(o3d_cutExtrusion));
@@ -459,13 +664,13 @@ void buildBridgeHoles(KompasObjectPtr kompas, ksPartPtr part, std::list<BridgeHo
     for (BridgeHoleBuildTarget target : bridgeHoleBuildTargets) {
 
         double xc = 0, yc = 0, radius = 0;
+        ksEntityPtr sketchEntity;
         if (loopIsCircle(target.outerLoop)) {
-            ksEntityPtr sketchEntity = bridgeHoleBuildCircleDrawSketch1(kompas, part, target, &xc, &yc, &radius);
-            buildBridgeHole1(sketchEntity, part, stepDepth);
+            sketchEntity = bridgeHoleBuildCircleDrawSketch1(kompas, part, target, &xc, &yc, &radius);
         } else {
-            // TODO
-            continue;
+            sketchEntity = bridgeHoleBuildNotCircleDrawSketch1(kompas, part, target, &xc, &yc, &radius);
         }
+        buildBridgeHole1(sketchEntity, part, stepDepth);
         buildBridgeHole2(kompas, part, target, stepDepth * 2, 4, xc, yc, radius);
         buildBridgeHole2(kompas, part, target, stepDepth * 3, 8, xc, yc, radius);
     }
