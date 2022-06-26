@@ -38,7 +38,7 @@ void performAntiOverhangingOptimization(KompasObjectPtr kompas) {
     ksFaceDefinitionPtr face = getSelectedPlane(kompas, &planeEq);
     double angle; //предельный угол нависания 
     if (face && kompas->ksReadDouble("Макс. угол нависания: ", 60, -DBL_MIN, DBL_MAX, &angle) == 1) {
-        optimizeElephantFoot(kompas, face, planeEq, angle);
+        optimizeOverhangingFace(kompas, face, planeEq, angle);
     }
 }
 

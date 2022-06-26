@@ -3,6 +3,6 @@
 
 #include "selectPlane.hpp"
 
-void optimizeElephantFoot(KompasObjectPtr kompas, ksFaceDefinitionPtr face, PlaneEq planeEq, double angle);
+void optimizeOverhangingFace(KompasObjectPtr kompas, ksFaceDefinitionPtr face, PlaneEq planeEq, double angle);
 
 #endif

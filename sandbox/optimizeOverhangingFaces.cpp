@@ -82,7 +82,7 @@ bool checkAngle(ksEdgeDefinitionPtr edge, ksFaceDefinitionPtr current, ksFaceDef
     return true;
 }
 
-void optimizeElephantFoot(KompasObjectPtr kompas, ksFaceDefinitionPtr face, PlaneEq planeEq, double angle) { 
+void optimizeOverhangingFace(KompasObjectPtr kompas, ksFaceDefinitionPtr face, PlaneEq planeEq, double angle) {
     IApplicationPtr api7 = kompas->ksGetApplication7();
     IKompasDocument3DPtr document3d(api7->GetActiveDocument());
     IPart7Ptr topPart(document3d->GetTopPart());
