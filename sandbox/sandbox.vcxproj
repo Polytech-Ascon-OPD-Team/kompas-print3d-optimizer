@@ -145,12 +145,14 @@
     <ClCompile Include="kompasUtils.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="optimizeElephantFoot.cpp" />
+    <ClCompile Include="optimizeOverhangingFaces.cpp" />
     <ClCompile Include="optimizeRounding.cpp" />
     <ClCompile Include="selectPlane.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kompasUtils.hpp" />
     <ClInclude Include="optimizeElephantFoot.hpp" />
+    <ClInclude Include="optimizeOverhangingFaces.hpp" />
     <ClInclude Include="optimizeRounding.hpp" />
     <ClInclude Include="selectPlane.hpp" />
   </ItemGroup>
