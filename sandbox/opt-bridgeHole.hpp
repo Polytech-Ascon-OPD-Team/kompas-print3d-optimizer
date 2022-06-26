@@ -3,7 +3,10 @@
 
 #include <list>
 
+#import "ksconstants.tlb" no_namespace named_guids
+#import "ksConstants3D.tlb" no_namespace named_guids
 #import "kAPI5.tlb" no_namespace named_guids rename( "min", "Imin" ) rename( "max", "Imax" ) rename( "ksFragmentLibrary", "ksIFragmentLibrary" )
+#import "kAPI7.tlb" no_namespace named_guids rename( "CreateWindow", "ICreateWindow" ) rename( "PostMessage", "IPostMessage" ) rename( "MessageBoxEx", "IMessageBoxEx" )
 
 struct BridgeHoleFillTarget {
     ksLoopPtr loop;
@@ -32,14 +35,14 @@ void fillBridgeHoles(ksPartPtr part, std::list<BridgeHoleFillTarget> bridgeHoleT
 void bridgeHoleFillOptimization(ksPartPtr part, ksFaceDefinitionPtr printFace, double extrusionDepth, HoleType holeType);
 
 bool isOuterLoopForBuild(ksLoopPtr loop);
+void drawLoopProjection(ksSketchDefinitionPtr sketchDef, ksLoopPtr loop);
 std::list<BridgeHoleBuildTarget> getBridgeHoleBuildTargets(ksPartPtr part, ksFaceDefinitionPtr printFace);
-ksEntityPtr bridgeHoleBuildCircleDrawSketch1(KompasObjectPtr kompas, ksPartPtr part, BridgeHoleBuildTarget target,
-        double* xc, double* yc, double* radius);
-ksEntityPtr bridgeHoleBuildNotCircleDrawSketch1(KompasObjectPtr kompas, ksPartPtr part, BridgeHoleBuildTarget target,
-        double* xc, double* yc, double* radius);
+ICirclePtr drawThinCircleProjection(Sketch sketch, ksPartPtr part, BridgeHoleBuildTarget target);
+void bridgeHoleBuildCircleDrawSketch1(Sketch sketch, ICirclePtr innerCircle, BridgeHoleBuildTarget target);
+void bridgeHoleBuildNotCircleDrawSketch1(KompasObjectPtr kompas, Sketch sketch, ICirclePtr innerCircle, BridgeHoleBuildTarget target);
 void buildBridgeHole1(ksEntityPtr sketchEntity, ksPartPtr part, double stepDepth);
 void buildBridgeHole2(KompasObjectPtr kompas, ksPartPtr part, BridgeHoleBuildTarget target, double stepDepth,
-        int count, double xc, double yc, double radius);
+        int polygonAngleCount, double centerX, double centerY, double radius);
 void buildBridgeHoles(KompasObjectPtr kompas, ksPartPtr part, std::list<BridgeHoleBuildTarget> bridgeHoleTargets, double stepDepth);
 void bridgeHoleBuildOptimization(KompasObjectPtr kompas, ksPartPtr part, ksFaceDefinitionPtr printFace, double stepDepth);
 
