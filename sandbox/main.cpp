@@ -17,9 +17,13 @@ void performRoundingOptimization(KompasObjectPtr kompas) {
     ksFaceDefinitionPtr face = getSelectedPlane(kompas, &planeEq);
     double radius;
     double angle;
-    if (face && kompas->ksReadDouble("Радиус: ", 0.0, -DBL_MIN, DBL_MAX, &radius) == 1 && kompas->ksReadDouble("Граничный угол: ", 60, -DBL_MIN, DBL_MAX, &angle) == 1) {
-        optimizeByRounding(kompas, face, planeEq, radius, angle);
-        kompas->ksMessage("Оптимизация модели была выполнена!");
+    if (face && kompas->ksReadDouble("Радиус: ", 0.0, -DBL_MIN, DBL_MAX, &radius) == 1 && kompas->ksReadDouble("Граничный угол: ", 60, -DBL_MIN, DBL_MAX, &angle) == 1 ) {
+        if (radius > DBL_MIN) {
+            optimizeByRounding(kompas, face, planeEq, radius, angle);
+            kompas->ksMessage("Оптимизация модели была выполнена!");
+        } else {
+            kompas->ksMessage("Неверный радиус!");
+        }
     }
 }
 
