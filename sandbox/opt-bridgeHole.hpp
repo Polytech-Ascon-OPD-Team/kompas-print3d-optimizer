@@ -39,6 +39,7 @@ void drawLoopProjection(ksSketchDefinitionPtr sketchDef, ksLoopPtr loop);
 std::list<BridgeHoleBuildTarget> getBridgeHoleBuildTargets(ksPartPtr part, ksFaceDefinitionPtr printFace);
 ICirclePtr drawThinCircleProjection(Sketch sketch, ksPartPtr part, BridgeHoleBuildTarget target);
 void bridgeHoleBuildCircleDrawSketch1(Sketch sketch, ICirclePtr innerCircle, BridgeHoleBuildTarget target);
+void closeContour(ILineSegmentsPtr lineSegments, std::list<double> points, double y);
 void bridgeHoleBuildNotCircleDrawSketch1(KompasObjectPtr kompas, Sketch sketch, ICirclePtr innerCircle, BridgeHoleBuildTarget target);
 void buildBridgeHole1(ksEntityPtr sketchEntity, ksPartPtr part, double stepDepth);
 void buildBridgeHole2(KompasObjectPtr kompas, ksPartPtr part, BridgeHoleBuildTarget target, double stepDepth,
