@@ -46,9 +46,11 @@ void WINAPI LIBRARYENTRY(unsigned int comm) {
         switch (comm) {
         case 1: {
             performRoundingOptimization(kompas);
+            break;
         }
         case 3: {
             performAntiElephantFootOptimiztion(kompas);
+            break;
         }
         default:
             break;

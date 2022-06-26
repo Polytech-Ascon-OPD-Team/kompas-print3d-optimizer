@@ -24,6 +24,9 @@
     <ClCompile Include="optimizeElephantFoot.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="optimizeOverhangingFaces.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kompasUtils.hpp">
@@ -36,6 +39,9 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="optimizeElephantFoot.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="optimizeOverhangingFaces.hpp">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
