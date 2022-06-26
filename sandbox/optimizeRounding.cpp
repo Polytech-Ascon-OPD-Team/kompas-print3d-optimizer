@@ -15,6 +15,7 @@ bool checkEdge(ksMeasurerPtr measurer, ksEdgeDefinitionPtr edge, double radius) 
         ksFaceDefinitionPtr face1(edge->GetAdjacentFace(true));
         ksFaceDefinitionPtr face2(edge->GetAdjacentFace(false));
         if (face1 && face2) {
+            /*
             double area1 = face1->GetArea(0x1);
             double area2 = face2->GetArea(0x1);
             double lenOfEdge = edge->GetLength(0x1);
@@ -60,8 +61,9 @@ bool checkEdge(ksMeasurerPtr measurer, ksEdgeDefinitionPtr edge, double radius) 
                     }
                 }
                 std::cout << "maxRadius:" << maxRadius <<"\n";
-                return edge->IsStraight() && face1->IsPlanar() && face2->IsPlanar() && radius <= maxRadius/2;
-            }
+                */
+                return edge->IsStraight() && face1->IsPlanar() && face2->IsPlanar();
+            //}
         }
     }
     return false;
@@ -89,6 +91,12 @@ void optimizeByRounding(KompasObjectPtr kompas, ksFaceDefinitionPtr face, PlaneE
                 fillet->radius = radius;
                 array->Add(entity);
                 filletEntity->Create();
+                if (!filletEntity->IsCreated()) {
+                    std::cout << "не удалось создать скугление!\n";
+                    array->Clear();
+                    filletEntity->Update();
+                }
+
                 std::cout << "найдено вертикальное ребро" << "\n";
             } else {
                 std::cout << "найдено невертикальное ребро" << "\n";
