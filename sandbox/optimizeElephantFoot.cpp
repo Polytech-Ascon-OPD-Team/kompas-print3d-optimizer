@@ -13,6 +13,13 @@ void optimizeElephantFoot(KompasObjectPtr kompas, ksFaceDefinitionPtr face, Plan
     IPart7Ptr topPart(document3d->GetTopPart());
     ksPartPtr part = kompas->TransferInterface(topPart, 1, 0);
     ksFeaturePtr feature(part->GetFeature());
+
+    ksEntityPtr macroElementEntity(part->NewEntity(o3d_MacroObject));
+    ksMacro3DDefinitionPtr macroElement(macroElementEntity->GetDefinition());
+    macroElementEntity->name = "Оптимизирующие фаски слоновьей ноги";
+    macroElement->StaffVisible = true;
+    macroElementEntity->Create();
+
     ksEntityCollectionPtr entityCollection(feature->EntityCollection(o3d_face));
     for (int i = 0; i < entityCollection->GetCount(); i++) {
         ksEntityPtr entity(entityCollection->GetByIndex(i));
@@ -27,7 +34,11 @@ void optimizeElephantFoot(KompasObjectPtr kompas, ksFaceDefinitionPtr face, Plan
                 chamfer->SetChamferParam(true, width, width);
                 array->Add(entity);
                 chamferEntity->Create();
+                if (chamferEntity->IsCreated()) {
+                    macroElement->Add(chamferEntity);
+                }
             }
         }
     }
+    macroElementEntity->Update();
 }
