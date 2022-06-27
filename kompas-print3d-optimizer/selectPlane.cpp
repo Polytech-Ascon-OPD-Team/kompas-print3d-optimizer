@@ -116,7 +116,6 @@ ksFaceDefinitionPtr getSelectedPlane(KompasObjectPtr kompas, PlaneEq* planeEq) {
         if (selectionMng->GetCount() == 1 && selectionMng->GetObjectType(0) == 105) {
             ksEntityPtr element(selectionMng->GetObjectByIndex(0));
             if (element) {
-                std::cout << "Тип:" << element->type << "\n";
                 if (element->type == 6) {
                     std::cout << "Была выбрана грань" << "\n";
                     ksFaceDefinitionPtr face(element->GetDefinition());
@@ -186,7 +185,6 @@ ksFaceDefinitionPtr getSelectedPlane(KompasObjectPtr kompas, PlaneEq* planeEq) {
         } else {
             kompas->ksMessage("Плоскость печати не выбрана!");
         }
-
     }
     return nullptr;
 }

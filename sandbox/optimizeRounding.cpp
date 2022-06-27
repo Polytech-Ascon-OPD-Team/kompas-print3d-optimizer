@@ -70,6 +70,7 @@ bool checkEdge(ksMeasurerPtr measurer, ksEdgeDefinitionPtr edge, double radius) 
 
 }
 
+
 void optimizeByRounding(KompasObjectPtr kompas, ksFaceDefinitionPtr face, PlaneEq planeEq, double radius, double angle) {
     double cos_angle = sin(angle * M_PI / 180.0); //да, тут смежные углы
     IApplicationPtr api7 = kompas->ksGetApplication7();
@@ -79,28 +80,31 @@ void optimizeByRounding(KompasObjectPtr kompas, ksFaceDefinitionPtr face, PlaneE
     ksFeaturePtr feature(part->GetFeature());
     ksEntityCollectionPtr entityCollection(feature->EntityCollection(o3d_edge));
     ksMeasurerPtr measurer(part->GetMeasurer());
+    ksEntityPtr macroElementEntity(part->NewEntity(o3d_MacroObject));
+    ksMacro3DDefinitionPtr macroElement(macroElementEntity->GetDefinition());
+    macroElementEntity->name = "Оптимизирующие скругления для выперающих углов";
+    macroElement->StaffVisible = true;
+    macroElementEntity->Create();
     for (int i = 0; i < entityCollection->GetCount(); i++) {
         ksEntityPtr entity(entityCollection->GetByIndex(i));
         ksEdgeDefinitionPtr edge(entity->GetDefinition());
         if (edge && checkEdge(measurer, edge, radius)) {
             bool isVerical = planeEq.isVertical(edge, cos_angle);
             if (isVerical) {
+                std::cout << "найдено вертикальное ребро" << "\n";
                 ksEntityPtr filletEntity(part->NewEntity(o3d_fillet));
                 ksFilletDefinitionPtr fillet(filletEntity->GetDefinition());
                 ksEntityCollectionPtr array(fillet->array());
                 fillet->radius = radius;
                 array->Add(entity);
                 filletEntity->Create();
-                if (!filletEntity->IsCreated()) {
-                    std::cout << "не удалось создать скугление!\n";
-                    array->Clear();
-                    filletEntity->Update();
+                if (filletEntity->IsCreated()) {
+                    macroElement->Add(filletEntity);
                 }
-
-                std::cout << "найдено вертикальное ребро" << "\n";
             } else {
                 std::cout << "найдено невертикальное ребро" << "\n";
             }
         }
     }
+    macroElementEntity->Update();
 }
