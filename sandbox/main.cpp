@@ -3,7 +3,7 @@
 
 #include "kompasUtils.hpp"
 #include "utils.hpp"
-#include "opt-bridgeHole.hpp"
+#include "optimizeBridgeHole.hpp"
 
 #import "ksconstants.tlb" no_namespace named_guids
 #import "ksConstants3D.tlb" no_namespace named_guids
@@ -38,10 +38,10 @@ int main() {
     _getch();
     chooseMng->UnChooseAll();
     
-    //bridgeHoleFillOptimization(part, printFace, 0.2, HoleType::ALL);
-    bridgeHoleBuildOptimization(kompas, part, printFace, 0.2);
+    optimizeBridgeHoleFill(part, printFace, 0.2, HoleType::NOT_CIRCLE);
+    optimizeBridgeHoleBuild(kompas, part, printFace, 0.2);
 
-    //document3d->RebuildDocument(); // Нужно чтобы исправить странные ошибки "Вырожденная проекция ребра"
+    document3d->RebuildDocument(); // Нужно чтобы исправить странные ошибки "Вырожденная проекция ребра"
 
     return 0;
 }

@@ -1,4 +1,4 @@
-#include "opt-bridgeHole.hpp"
+#include "optimizeBridgeHole.hpp"
 
 #include <list>
 
@@ -205,7 +205,7 @@ void fillBridgeHoles(ksPartPtr part, std::list<BridgeHoleFillTarget> bridgeHoleF
     macroEntity->Update();
 }
 
-void bridgeHoleFillOptimization(ksPartPtr part, ksFaceDefinitionPtr printFace, double extrusionDepth, HoleType holeType) {
+void optimizeBridgeHoleFill(ksPartPtr part, ksFaceDefinitionPtr printFace, double extrusionDepth, HoleType holeType) {
     std::list<BridgeHoleFillTarget> targets = getBridgeHoleFillTargets(part, printFace, holeType);
     fillBridgeHoles(part, targets, extrusionDepth);
 }
@@ -608,14 +608,14 @@ void buildBridgeHoles(KompasObjectPtr kompas, ksPartPtr part, std::list<BridgeHo
 
         {
             Sketch sketch2 = createSketch(kompas, part, target.face);
-            bridgeHoleBuildDrawSketch2(kompas, sketch, centerX, centerY, radius, 4);
+            bridgeHoleBuildDrawSketch2(kompas, sketch2, centerX, centerY, radius, 4);
             sketch2.definition->EndEdit();
             macroElement->Add(sketch2.entity);
             macroElement->Add(cutExtrusion(part, sketch2.entity, true, stepDepth * 2));
         }
         {
             Sketch sketch2 = createSketch(kompas, part, target.face);
-            bridgeHoleBuildDrawSketch2(kompas, sketch, centerX, centerY, radius, 8);
+            bridgeHoleBuildDrawSketch2(kompas, sketch2, centerX, centerY, radius, 8);
             sketch2.definition->EndEdit();
             macroElement->Add(sketch2.entity);
             macroElement->Add(cutExtrusion(part, sketch2.entity, true, stepDepth * 3));
@@ -627,7 +627,7 @@ void buildBridgeHoles(KompasObjectPtr kompas, ksPartPtr part, std::list<BridgeHo
     macroEntity->Update();
 }
 
-void bridgeHoleBuildOptimization(KompasObjectPtr kompas, ksPartPtr part, ksFaceDefinitionPtr printFace, double stepDepth) {
+void optimizeBridgeHoleBuild(KompasObjectPtr kompas, ksPartPtr part, ksFaceDefinitionPtr printFace, double stepDepth) {
     std::list<BridgeHoleBuildTarget> targets = getBridgeHoleBuildTargets(part, printFace);
     buildBridgeHoles(kompas, part, targets, stepDepth);
 }
