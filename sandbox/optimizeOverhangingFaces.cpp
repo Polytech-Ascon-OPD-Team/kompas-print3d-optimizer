@@ -8,39 +8,8 @@
 #import "kAPI5.tlb" no_namespace named_guids rename( "min", "Imin" ) rename( "max", "Imax" ) rename( "ksFragmentLibrary", "ksIFragmentLibrary" )
 #import "kAPI7.tlb" no_namespace named_guids rename( "CreateWindow", "ICreateWindow" ) rename( "PostMessage", "IPostMessage" ) rename( "MessageBoxEx", "IMessageBoxEx" )
 
-/*
-void getAnotherEdges(ksFaceDefinitionPtr face, ksEdgeDefinitionPtr edge, ksEdgeDefinitionPtr* first, ksEdgeDefinitionPtr* second) {
-    ksEdgeCollectionPtr edges(face->EdgeCollection());
-    ksVertexDefinitionPtr v1(edge->GetVertex(true));
-    ksVertexDefinitionPtr v2(edge->GetVertex(false));
-    ksEdgeDefinitionPtr edge1 = nullptr, edge2 = nullptr;
-    for (int i = 0; i < edges->GetCount(); i++) {
-        ksEdgeDefinitionPtr currEdge(edges->GetByIndex(i));
-        if ( !(v1 == ksVertexDefinitionPtr(currEdge->GetVertex(true)) && v2 == ksVertexDefinitionPtr(currEdge->GetVertex(false))) && !(v2 == ksVertexDefinitionPtr(currEdge->GetVertex(true)) && v1 == ksVertexDefinitionPtr(currEdge->GetVertex(false)))) {
-            if (v1 == ksVertexDefinitionPtr(currEdge -> GetVertex(true)) || v1 == ksVertexDefinitionPtr(currEdge->GetVertex(false))) {
-                edge1 = currEdge;
-            } else if (v2 == ksVertexDefinitionPtr(currEdge->GetVertex(true)) || v2 == ksVertexDefinitionPtr(currEdge->GetVertex(false))) {
-                std::cout << "!!\n";
-                edge2 = currEdge;
-            }
-            if (edge1 && edge2) {
-                break;
-            }
-        }
-    }
-    if (!edge1) {
-        std::cout << "edge1 is null" << "\n";
-    } else if(!edge2) {
-        std::cout << "edge2 is null" << "\n";
-
-    }
-    (*first) = edge1;
-    (*second) = edge2;
-}
-*/
 
 
-//Проверяет плоскость на нависание 
 bool checkOverhangingPlane(PlaneEq planeEqOfPrintPlane, ksFaceDefinitionPtr face, double angle) {
     double limit_cos_angle = cos(angle * M_PI / 180.0);
     ksTessellationPtr tessellation(face->GetTessellation());
@@ -95,10 +64,10 @@ void optimizeOverhangingFace(KompasObjectPtr kompas, ksFaceDefinitionPtr face, P
     chooseMng->UnChooseAll();
     for (int i = 0; i < entityCollection->GetCount(); i++) {
         ksEntityPtr entity(entityCollection->GetByIndex(i));
-        ksFaceDefinitionPtr currFace(entity->GetDefinition()); //рассматриваемая нависающая грань
+        ksFaceDefinitionPtr currFace(entity->GetDefinition()); //Г°Г Г±Г±Г¬Г ГІГ°ГЁГўГ ГҐГ¬Г Гї Г­Г ГўГЁГ±Г ГѕГ№Г Гї ГЈГ°Г Г­Гј
         if (currFace && currFace->IsPlanar() && checkOverhangingPlane(planeEq, currFace, angle) && !PlaneEq(currFace).equals(face)) {
             ksEdgeCollectionPtr edges(currFace->EdgeCollection());
-            for (int j = 0; j < edges->GetCount(); j++) { //обходим все ребра
+            for (int j = 0; j < edges->GetCount(); j++) { //Г®ГЎГµГ®Г¤ГЁГ¬ ГўГ±ГҐ Г°ГҐГЎГ°Г 
                 ksEdgeDefinitionPtr edge(edges->GetByIndex(j));
                 ksFaceDefinitionPtr face1(edge->GetAdjacentFace(true));
                 ksFaceDefinitionPtr face2(edge->GetAdjacentFace(false));
@@ -113,8 +82,8 @@ void optimizeOverhangingFace(KompasObjectPtr kompas, ksFaceDefinitionPtr face, P
                 measurer->SetObject1(currFace);
                 measurer->SetObject2(otherFace);
                 measurer->Calc();
-                std::cout << "angle:" << measurer->angle << "\n"; // Здесь всегда получем значение угла меньше 180 градусов  
-                if (checkAngle(edge, currFace, otherFace)) {// Здесь пытаемся выполнить проверку на выпуклость двухгранного угла
+                std::cout << "angle:" << measurer->angle << "\n"; // Г‡Г¤ГҐГ±Гј ГўГ±ГҐГЈГ¤Г  ГЇГ®Г«ГіГ·ГҐГ¬ Г§Г­Г Г·ГҐГ­ГЁГҐ ГіГЈГ«Г  Г¬ГҐГ­ГјГёГҐ 180 ГЈГ°Г Г¤ГіГ±Г®Гў  
+                if (checkAngle(edge, currFace, otherFace)) {// Г‡Г¤ГҐГ±Гј ГЇГ»ГІГ ГҐГ¬Г±Гї ГўГ»ГЇГ®Г«Г­ГЁГІГј ГЇГ°Г®ГўГҐГ°ГЄГі Г­Г  ГўГ»ГЇГіГЄГ«Г®Г±ГІГј Г¤ГўГіГµГЈГ°Г Г­Г­Г®ГЈГ® ГіГЈГ«Г 
                     chooseMng->Choose(edge);
                     // ...
                 }
