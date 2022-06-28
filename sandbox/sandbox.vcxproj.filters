@@ -15,7 +15,7 @@
     <ClCompile Include="kompasUtils.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="opt-bridgeHole.cpp">
+    <ClCompile Include="optimizeBridgeHole.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="utils.cpp">
@@ -26,7 +26,7 @@
     <ClInclude Include="kompasUtils.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="opt-bridgeHole.hpp">
+    <ClInclude Include="optimizeBridgeHole.hpp">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="utils.hpp">

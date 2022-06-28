@@ -1,4 +1,4 @@
-#include "opt-bridgeHole.hpp"
+#include "optimizeBridgeHole.hpp"
 
 #include <list>
 
@@ -9,6 +9,10 @@
 #import "ksConstants3D.tlb" no_namespace named_guids
 #import "kAPI5.tlb" no_namespace named_guids rename( "min", "Imin" ) rename( "max", "Imax" ) rename( "ksFragmentLibrary", "ksIFragmentLibrary" )
 #import "kAPI7.tlb" no_namespace named_guids rename( "CreateWindow", "ICreateWindow" ) rename( "PostMessage", "IPostMessage" ) rename( "MessageBoxEx", "IMessageBoxEx" )
+
+const char* MACRO_NAME_BRIDGE_HOLE_FILL = "Закрытие нависающих отвертий диафрагмой";
+const char* MACRO_NAME_BRIDGE_HOLE_BUILD = "Достройка нависающих отверстий";
+const char* MACRO_NAME_BRIDGE_HOLE_BUILD_ELEMENT = "Отверстие";
 
 bool loopIsCircle(ksLoopPtr loop) {
     ksEdgeCollectionPtr edges(loop->EdgeCollection());
@@ -106,6 +110,22 @@ bool checkHoleLoop(ksLoopPtr loop, ksFaceDefinitionPtr printFace, ksMeasurerPtr 
     return false;
 }
 
+ksEntityPtr cutExtrusion(ksPartPtr part, ksEntityPtr sketchEntity, bool normalDirection, double depth) {
+    ksEntityPtr extrusionEntity(part->NewEntity(o3d_cutExtrusion));
+    ksCutExtrusionDefinitionPtr extrusionDef(extrusionEntity->GetDefinition());
+    extrusionDef->cut = true;
+    extrusionDef->chooseType = ksChBodiesAndParts;
+    if (normalDirection) {
+        extrusionDef->directionType = dtNormal;
+    } else {
+        extrusionDef->directionType = dtReverse;
+    }
+    extrusionDef->SetSideParam(normalDirection, etBlind, depth, 0, false);
+    extrusionDef->SetSketch(sketchEntity);
+    extrusionEntity->Create();
+    return extrusionEntity;
+}
+
 /* Закрытие нависающих отверстий тонким слоем материала */
 
 std::list<BridgeHoleFillTarget> getBridgeHoleFillTargets(ksPartPtr part, ksFaceDefinitionPtr printFace, HoleType holeType) {
@@ -149,11 +169,20 @@ std::list<BridgeHoleFillTarget> getBridgeHoleFillTargets(ksPartPtr part, ksFaceD
 }
 
 void fillBridgeHoles(ksPartPtr part, std::list<BridgeHoleFillTarget> bridgeHoleFillTargets, double extrusionDepth) {
+
+    ksEntityPtr macroEntity(part->NewEntity(o3d_MacroObject));
+    ksMacro3DDefinitionPtr macro(macroEntity->GetDefinition());
+    macroEntity->name = MACRO_NAME_BRIDGE_HOLE_FILL;
+    macro->StaffVisible = true;
+    macroEntity->Create();
+
     for (BridgeHoleFillTarget target : bridgeHoleFillTargets) {
         ksEntityPtr sketchEntity(part->NewEntity(o3d_sketch));
         ksSketchDefinitionPtr sketchDef(sketchEntity->GetDefinition());
         sketchDef->SetPlane(target.face);
         sketchEntity->Create();
+
+        macro->Add(sketchEntity);
 
         sketchDef->BeginEdit();
         ksEdgeCollectionPtr edges(target.loop->EdgeCollection());
@@ -170,10 +199,13 @@ void fillBridgeHoles(ksPartPtr part, std::list<BridgeHoleFillTarget> bridgeHoleF
         extrusionDef->SetSideParam(false, etBlind, extrusionDepth, 0, false);
         extrusionDef->SetSketch(sketchEntity);
         extrusionEntity->Create();
+
+        macro->Add(extrusionEntity);
     }
+    macroEntity->Update();
 }
 
-void bridgeHoleFillOptimization(ksPartPtr part, ksFaceDefinitionPtr printFace, double extrusionDepth, HoleType holeType) {
+void optimizeBridgeHoleFill(ksPartPtr part, ksFaceDefinitionPtr printFace, double extrusionDepth, HoleType holeType) {
     std::list<BridgeHoleFillTarget> targets = getBridgeHoleFillTargets(part, printFace, holeType);
     fillBridgeHoles(part, targets, extrusionDepth);
 }
@@ -535,43 +567,31 @@ void bridgeHoleBuildNotCircleDrawSketch1(KompasObjectPtr kompas, Sketch sketch, 
     closeContour(lineSegments, pointsMax, yMax);
 }
 
-void buildBridgeHole1(ksEntityPtr sketchEntity, ksPartPtr part, double stepDepth) {
-    ksEntityPtr extrusionEntity(part->NewEntity(o3d_cutExtrusion));
-    ksCutExtrusionDefinitionPtr extrusionDef(extrusionEntity->GetDefinition());
-    extrusionDef->cut = true;
-    extrusionDef->chooseType = ksChBodiesAndParts;
-    extrusionDef->directionType = dtNormal;
-    extrusionDef->SetSideParam(true, etBlind, stepDepth, 0, false);
-    extrusionDef->SetSketch(sketchEntity);
-    extrusionEntity->Create();
-}
-
-void buildBridgeHole2(KompasObjectPtr kompas, ksPartPtr part, BridgeHoleBuildTarget target, double stepDepth,
-        int polygonAngleCount, double centerX, double centerY, double radius) {
-    Sketch sketch = createSketch(kompas, part, target.face);
-
+void bridgeHoleBuildDrawSketch2(KompasObjectPtr kompas, Sketch sketch, double centerX, double centerY, double radius, int angleCount) {
     ksRegularPolygonParamPtr polygonParam(kompas->GetParamStruct(ko_RegularPolygonParam));
     polygonParam->xc = centerX; polygonParam->yc = centerY;
-    polygonParam->count = polygonAngleCount;
+    polygonParam->count = angleCount;
     polygonParam->describe = true;
     polygonParam->radius = radius;
     polygonParam->style = 1;
 
     sketch.document2d->ksRegularPolygon(polygonParam, 0);
-    sketch.definition->EndEdit();
-
-    ksEntityPtr extrusionEntity(part->NewEntity(o3d_cutExtrusion));
-    ksCutExtrusionDefinitionPtr extrusionDef(extrusionEntity->GetDefinition());
-    extrusionDef->cut = true;
-    extrusionDef->chooseType = ksChBodiesAndParts;
-    extrusionDef->directionType = dtNormal;
-    extrusionDef->SetSideParam(true, etBlind, stepDepth, 0, false);
-    extrusionDef->SetSketch(sketch.entity);
-    extrusionEntity->Create();
 }
 
 void buildBridgeHoles(KompasObjectPtr kompas, ksPartPtr part, std::list<BridgeHoleBuildTarget> bridgeHoleBuildTargets, double stepDepth) {
+
+    ksEntityPtr macroEntity(part->NewEntity(o3d_MacroObject));
+    ksMacro3DDefinitionPtr macro(macroEntity->GetDefinition());
+    macroEntity->name = MACRO_NAME_BRIDGE_HOLE_BUILD;
+    macro->StaffVisible = true;
+    macroEntity->Create();
+
     for (BridgeHoleBuildTarget target : bridgeHoleBuildTargets) {
+        ksEntityPtr macroElementEntity(part->NewEntity(o3d_MacroObject));
+        ksMacro3DDefinitionPtr macroElement(macroElementEntity->GetDefinition());
+        macroElementEntity->name = MACRO_NAME_BRIDGE_HOLE_BUILD_ELEMENT;
+        macroElement->StaffVisible = true;
+        macroElementEntity->Create();
 
         Sketch sketch = createSketch(kompas, part, target.face);
         ICirclePtr innerCircle = drawThinCircleProjection(sketch, part, target);
@@ -583,14 +603,31 @@ void buildBridgeHoles(KompasObjectPtr kompas, ksPartPtr part, std::list<BridgeHo
             bridgeHoleBuildNotCircleDrawSketch1(kompas, sketch, innerCircle, target);
         }
         sketch.definition->EndEdit();
-        buildBridgeHole1(sketch.entity, part, stepDepth);
+        macroElement->Add(sketch.entity);
+        macroElement->Add(cutExtrusion(part, sketch.entity, true, stepDepth));
 
-        buildBridgeHole2(kompas, part, target, stepDepth * 2, 4, centerX, centerY, radius);
-        buildBridgeHole2(kompas, part, target, stepDepth * 3, 8, centerX, centerY, radius);
+        {
+            Sketch sketch2 = createSketch(kompas, part, target.face);
+            bridgeHoleBuildDrawSketch2(kompas, sketch2, centerX, centerY, radius, 4);
+            sketch2.definition->EndEdit();
+            macroElement->Add(sketch2.entity);
+            macroElement->Add(cutExtrusion(part, sketch2.entity, true, stepDepth * 2));
+        }
+        {
+            Sketch sketch2 = createSketch(kompas, part, target.face);
+            bridgeHoleBuildDrawSketch2(kompas, sketch2, centerX, centerY, radius, 8);
+            sketch2.definition->EndEdit();
+            macroElement->Add(sketch2.entity);
+            macroElement->Add(cutExtrusion(part, sketch2.entity, true, stepDepth * 3));
+        }
+        
+        macroElementEntity->Update();
+        macro->Add(macroElementEntity);
     }
+    macroEntity->Update();
 }
 
-void bridgeHoleBuildOptimization(KompasObjectPtr kompas, ksPartPtr part, ksFaceDefinitionPtr printFace, double stepDepth) {
+void optimizeBridgeHoleBuild(KompasObjectPtr kompas, ksPartPtr part, ksFaceDefinitionPtr printFace, double stepDepth) {
     std::list<BridgeHoleBuildTarget> targets = getBridgeHoleBuildTargets(part, printFace);
     buildBridgeHoles(kompas, part, targets, stepDepth);
 }
