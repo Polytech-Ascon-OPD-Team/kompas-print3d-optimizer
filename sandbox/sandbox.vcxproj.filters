@@ -27,6 +27,12 @@
     <ClCompile Include="optimizeOverhangingFaces.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="utils.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizeCircleHorizontalHoles.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kompasUtils.hpp">
@@ -42,6 +48,12 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="optimizeOverhangingFaces.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="utils.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="optimizeCircleHorizontalHoles.hpp">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
