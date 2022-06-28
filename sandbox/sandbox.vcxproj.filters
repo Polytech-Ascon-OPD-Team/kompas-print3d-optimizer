@@ -21,6 +21,9 @@
     <ClCompile Include="utils.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="optimizeRoundingHorizontalEdges.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kompasUtils.hpp">
@@ -30,6 +33,9 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="utils.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="optimizeRoundingHorizontalEdges.hpp">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

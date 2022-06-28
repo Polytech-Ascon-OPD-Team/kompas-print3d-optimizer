@@ -1,14 +1,15 @@
 ﻿#include <iostream>
 #include <conio.h>
+#include <list>
 
 #include "kompasUtils.hpp"
-#include "utils.hpp"
-#include "optimizeBridgeHole.hpp"
+#include "optimizeRoundingHorizontalEdges.hpp"
 
 #import "ksconstants.tlb" no_namespace named_guids
 #import "ksConstants3D.tlb" no_namespace named_guids
 #import "kAPI5.tlb" no_namespace named_guids rename( "min", "Imin" ) rename( "max", "Imax" ) rename( "ksFragmentLibrary", "ksIFragmentLibrary" )
 #import "kAPI7.tlb" no_namespace named_guids rename( "CreateWindow", "ICreateWindow" ) rename( "PostMessage", "IPostMessage" ) rename( "MessageBoxEx", "IMessageBoxEx" )
+
 
 int main() {
     CoInitialize(nullptr);
@@ -28,7 +29,7 @@ int main() {
     // Задаем грань стола 3д принтера. Только для тестирования
     for (int printFaceIndex = 0; printFaceIndex < facesCount; printFaceIndex++) {
         printFace = faces->GetByIndex(printFaceIndex);
-        if (abs(printFace->GetArea(ksLUnMM) - 1146) < 1) {
+        if (abs(printFace->GetArea(ksLUnMM) - 1052) < 1) {
             break;
         }
     }
@@ -37,11 +38,7 @@ int main() {
     std::cout << "print face\n";
     _getch();
     chooseMng->UnChooseAll();
-    
-    optimizeBridgeHoleFill(part, printFace, 0.2, HoleType::NOT_CIRCLE);
-    optimizeBridgeHoleBuild(kompas, part, printFace, 0.2);
 
-    document3d->RebuildDocument(); // Нужно чтобы исправить странные ошибки "Вырожденная проекция ребра"
+    optimizeRoundingHorizontalEdges(part, printFace);
 
-    return 0;
 }

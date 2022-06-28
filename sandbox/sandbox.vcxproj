@@ -145,11 +145,13 @@
     <ClCompile Include="kompasUtils.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="optimizeBridgeHole.cpp" />
+    <ClCompile Include="optimizeRoundingHorizontalEdges.cpp" />
     <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kompasUtils.hpp" />
     <ClInclude Include="optimizeBridgeHole.hpp" />
+    <ClInclude Include="optimizeRoundingHorizontalEdges.hpp" />
     <ClInclude Include="utils.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
