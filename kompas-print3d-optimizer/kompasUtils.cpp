@@ -24,3 +24,4 @@ KompasObjectPtr getKompasObjectPtr() {
     }
     return kompas;
 }
+

@@ -160,7 +160,7 @@ ksFaceDefinitionPtr getSelectedPlane(KompasObjectPtr kompas, PlaneEq* planeEq) {
 
 
                         if (!((s1 > 0) && (s2 == 0))) {
-                            kompas->ksMessage("Плоскость печати пересекает деталь!");
+                            kompas->ksError("Плоскость печати пересекает деталь!");
                         } else {
                             kompas->ksMessage("Плоскость печати успешно выбрана!");
                             planeEq->a = a;
@@ -171,19 +171,19 @@ ksFaceDefinitionPtr getSelectedPlane(KompasObjectPtr kompas, PlaneEq* planeEq) {
                         }
 
                     } else {
-                        kompas->ksMessage("Выбранная грань должна быть плоской!");
+                        kompas->ksError("Выбранная грань должна быть плоской!");
                     }
                 } else {
-                    kompas->ksMessage("Выбранный элемент не является гранью!");
+                    kompas->ksError("Выбранный элемент не является гранью!");
                 }
             } else {
-                std::cout << "WHAT?" << "\n";
+                std::cout << "Не рассмотренная ошибка!" << "\n";
             }
 
         } else if (selectionMng->GetCount() > 0) {
-            kompas->ksMessage("Должен был быть выбран только один элемент в виде плоской грани!");
+            kompas->ksError("Должен был быть выбран только один элемент в виде плоской грани!");
         } else {
-            kompas->ksMessage("Плоскость печати не выбрана!");
+            kompas->ksError("Плоскость печати не выбрана!");
         }
     }
     return nullptr;

@@ -19,6 +19,12 @@
     <ClInclude Include="optimizeElephantFoot.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="optimizeBridgeHole.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="utils.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mainLibrary.cpp">
@@ -40,6 +46,12 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="optimizeElephantFoot.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizeBridgeHole.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="utils.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

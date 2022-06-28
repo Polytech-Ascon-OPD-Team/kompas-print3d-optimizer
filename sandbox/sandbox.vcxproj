@@ -144,6 +144,7 @@
   <ItemGroup>
     <ClCompile Include="kompasUtils.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="optimizeBridgeHole.cpp" />
     <ClCompile Include="optimizeElephantFoot.cpp" />
     <ClCompile Include="optimizeCircleHorizontalHoles.cpp" />
     <ClCompile Include="optimizeOverhangingFaces.cpp" />
@@ -153,6 +154,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kompasUtils.hpp" />
+    <ClInclude Include="optimizeBridgeHole.hpp" />
     <ClInclude Include="optimizeCircleHorizontalHoles.hpp" />
     <ClInclude Include="optimizeElephantFoot.hpp" />
     <ClInclude Include="optimizeOverhangingFaces.hpp" />

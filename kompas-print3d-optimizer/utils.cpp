@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "utils.hpp"
 
 #include <cmath>
