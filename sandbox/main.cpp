@@ -178,6 +178,8 @@ int main() {
                     break;
                 }
                 default:
+                    std::cout << "Ошибка\n";
+                    return 0;
                     break;
                 }
             }

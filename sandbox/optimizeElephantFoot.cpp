@@ -44,9 +44,11 @@ void optimizeElephantFoot(KompasObjectPtr kompas, ksFaceDefinitionPtr face, Plan
         chamfer->SetChamferParam(true, width, width);
         array->Add((*iter));
         chamferEntity->hidden = true;
-        chamferEntity->Create();
-        if (chamferEntity->IsCreated()) {
+        bool isCreated = chamferEntity->Create();
+        if (isCreated) {
             macroElement->Add(chamferEntity);
+        } else {
+            array->Clear();
         }
     }
     macroElementEntity->Update();
