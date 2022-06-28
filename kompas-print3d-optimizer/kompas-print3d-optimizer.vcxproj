@@ -259,6 +259,8 @@
     </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="utils.cpp" />
+    <ClInclude Include="utils.hpp" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -271,6 +273,7 @@
     <ClCompile Include="optimizeElephantFoot.cpp" />
     <ClCompile Include="optimizeRounding.cpp" />
     <ClCompile Include="selectPlane.cpp" />
+    <ClCompile Include="optimizeBridgeHole.cpp" />
     <ClCompile Include="StdAfx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -280,6 +283,7 @@
     <ClInclude Include="kompasUtils.hpp" />
     <ClInclude Include="optimizeElephantFoot.hpp" />
     <ClInclude Include="optimizeRounding.hpp" />
+    <ClInclude Include="optimizeBridgeHole.hpp" />
     <ClInclude Include="resources\resource.h" />
     <ClInclude Include="selectPlane.hpp" />
     <ClInclude Include="StdAfx.h" />

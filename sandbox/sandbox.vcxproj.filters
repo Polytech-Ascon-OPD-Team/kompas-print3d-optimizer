@@ -33,6 +33,9 @@
     <ClCompile Include="optimizeCircleHorizontalHoles.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="optimizeBridgeHole.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kompasUtils.hpp">
@@ -54,6 +57,9 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="optimizeCircleHorizontalHoles.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="optimizeBridgeHole.hpp">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

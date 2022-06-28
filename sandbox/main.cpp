@@ -1,5 +1,7 @@
 ﻿#include <iostream>
 #include <float.h>
+#include <conio.h>
+
 #include "kompasUtils.hpp"
 #include "selectPlane.hpp"
 #include "optimizeRounding.hpp"
@@ -77,6 +79,8 @@ void performHorizontalHolesOptimization(KompasObjectPtr kompas) {
         /*
         ksEntityPtr planeMiddleEntity(part->NewEntity(o3d_planeMiddle));
 
+    ksDocument3DPtr doc3d = kompas->ActiveDocument3D();
+    ksChooseMngPtr chooseMng(doc3d->GetChooseMng());
 
          ksPlaneMiddleDefinitionPtr planeMiddle(planeMiddleEntity->GetDefinition());
          ksFaceCollectionPtr otherFaces(face->ConnectedFaceCollection());
