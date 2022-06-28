@@ -1,6 +1,7 @@
 #include "optimizeElephantFoot.hpp"
 #include "selectPlane.hpp"
 #include <iostream>
+#include <set>
 #import "ksconstants.tlb" no_namespace named_guids
 #import "ksConstants3D.tlb" no_namespace named_guids
 #import "kAPI5.tlb" no_namespace named_guids rename( "min", "Imin" ) rename( "max", "Imax" ) rename( "ksFragmentLibrary", "ksIFragmentLibrary" )
@@ -20,7 +21,8 @@ void optimizeElephantFoot(KompasObjectPtr kompas, ksFaceDefinitionPtr face, Plan
     macroElement->StaffVisible = true;
     macroElementEntity->Create();
 
-    ksEntityCollectionPtr entityCollection(feature->EntityCollection(o3d_face));
+    ksEntityCollectionPtr entityCollection(feature->EntityCollection(o3d_face));                
+    std::set<ksEdgeDefinitionPtr> edgesTargets;
     for (int i = 0; i < entityCollection->GetCount(); i++) {
         ksEntityPtr entity(entityCollection->GetByIndex(i));
         ksFaceDefinitionPtr currFace(entity->GetDefinition());
@@ -28,17 +30,27 @@ void optimizeElephantFoot(KompasObjectPtr kompas, ksFaceDefinitionPtr face, Plan
             PlaneEq currPlaneEq(currFace);
             if (currPlaneEq.equals(planeEq)) {
                 std::cout << "Ќайдена поверхность в плоскости печати \n";
-                ksEntityPtr chamferEntity(part->NewEntity(o3d_chamfer));
-                ksChamferDefinitionPtr chamfer(chamferEntity->GetDefinition());
-                ksEntityCollectionPtr array(chamfer->array());
-                chamfer->SetChamferParam(true, width, width);
-                array->Add(entity);
-                chamferEntity->Create();
-                if (chamferEntity->IsCreated()) {
-                    macroElement->Add(chamferEntity);
+                ksEdgeCollectionPtr edges(currFace->EdgeCollection());
+                for (int i = 0; i < edges->GetCount(); i++) {
+                    edgesTargets.insert(ksEdgeDefinitionPtr(edges->GetByIndex(i)));
                 }
             }
         }
     }
+    for (std::set<ksEdgeDefinitionPtr>::iterator iter = edgesTargets.begin(); iter != edgesTargets.end(); iter++) {
+        ksEntityPtr chamferEntity(part->NewEntity(o3d_chamfer));
+        ksChamferDefinitionPtr chamfer(chamferEntity->GetDefinition());
+        ksEntityCollectionPtr array(chamfer->array());
+        chamfer->SetChamferParam(true, width, width);
+        array->Add((*iter));
+        chamferEntity->hidden = true;
+        bool isCreated = chamferEntity->Create();
+        if (isCreated) {
+            macroElement->Add(chamferEntity);
+        } else {
+            array->Clear();
+        }
+    }
     macroElementEntity->Update();
+    document3d->RebuildDocument();
 }
