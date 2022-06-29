@@ -41,12 +41,16 @@ bool checkFaceWithHole(ksFaceDefinitionPtr face, ksFaceDefinitionPtr printFace, 
     return true;
 }
 
-bool isHoleDirect(ksLoopPtr loop, ksFaceDefinitionPtr printFace, ksMeasurerPtr measurer) {
+bool isHoleDirect(ksFaceDefinitionPtr face, ksLoopPtr loop, ksFaceDefinitionPtr printFace, ksMeasurerPtr measurer) {
     ksEdgeCollectionPtr edges(loop->EdgeCollection());
     int edgesCount = edges->GetCount();
     for (int holeEdgeIndex = 0; holeEdgeIndex < edgesCount; holeEdgeIndex++) {
         ksEdgeDefinitionPtr holeEdge(edges->GetByIndex(holeEdgeIndex));
+
         ksFaceDefinitionPtr holeFace(holeEdge->GetAdjacentFace(false));
+        if (holeFace == face) {
+            holeFace = holeEdge->GetAdjacentFace(true);
+        }
 
         if (!holeFace->IsCylinder()) {
             if (!holeFace->IsPlanar()) {
@@ -65,8 +69,8 @@ bool isHoleDirect(ksLoopPtr loop, ksFaceDefinitionPtr printFace, ksMeasurerPtr m
     return true;
 }
 
-bool checkHoleLoop(ksLoopPtr loop, ksFaceDefinitionPtr printFace, ksMeasurerPtr measurer) {
-    if (!isHoleDirect(loop, printFace, measurer)) {
+bool checkHoleLoop(ksFaceDefinitionPtr face, ksLoopPtr loop, ksFaceDefinitionPtr printFace, ksMeasurerPtr measurer) {
+    if (!isHoleDirect(face, loop, printFace, measurer)) {
         return false;
     }
 
@@ -75,7 +79,11 @@ bool checkHoleLoop(ksLoopPtr loop, ksFaceDefinitionPtr printFace, ksMeasurerPtr 
 
     for (int holeEdgeIndex = 0; holeEdgeIndex < edgesCount; holeEdgeIndex++) {
         ksEdgeDefinitionPtr holeEdge(edges->GetByIndex(holeEdgeIndex));
+        
         ksFaceDefinitionPtr holeFace(holeEdge->GetAdjacentFace(false));
+        if (holeFace == face) {
+            holeFace = holeEdge->GetAdjacentFace(true);
+        }
 
         measurer->SetObject1(printFace);
         measurer->SetObject2(holeEdge);
@@ -160,7 +168,7 @@ std::list<BridgeHoleFillTarget> getBridgeHoleFillTargets(ksPartPtr part, ksFaceD
                 }
             }
 
-            if (checkHoleLoop(innerLoop, printFace, measurer)) {
+            if (checkHoleLoop(face, innerLoop, printFace, measurer)) {
                 bridgeHoleFillTargets.push_back(BridgeHoleFillTarget{ innerLoop, face });
             }
         }
@@ -262,7 +270,7 @@ std::list<BridgeHoleBuildTarget> getBridgeHoleBuildTargets(ksPartPtr part, ksFac
             continue;
         }
 
-        if (checkHoleLoop(innerLoop, printFace, measurer)) {
+        if (checkHoleLoop(face, innerLoop, printFace, measurer)) {
             bridgeHoleBuildTargets.push_back(BridgeHoleBuildTarget{ innerLoop, outerLoop, face });
         }
     }
