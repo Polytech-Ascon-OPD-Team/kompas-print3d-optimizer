@@ -326,8 +326,8 @@ void bridgeHoleBuildCircleDrawSketch1(Sketch sketch, ICirclePtr innerCircle, Bri
 
     ILineSegmentsPtr lineSegments(drawingContainer->LineSegments);
     ILineSegmentPtr lineSegment1(lineSegments->Add());
-    lineSegment1->X1 = outerCircle->Xc + 1; lineSegment1->Y1 = outerCircle->Yc - 1;
-    lineSegment1->X2 = outerCircle->Xc - 1; lineSegment1->Y2 = outerCircle->Yc - 1;
+    lineSegment1->X1 = outerCircle->Xc + innerCircle->Radius; lineSegment1->Y1 = outerCircle->Yc - innerCircle->Radius;
+    lineSegment1->X2 = outerCircle->Xc - innerCircle->Radius; lineSegment1->Y2 = outerCircle->Yc - innerCircle->Radius;
     lineSegment1->Update();
     IDrawingObjectPtr lineSegment1DrawingObject(lineSegment1);
     IDrawingObject1Ptr lineSegment1DrawingObject1(lineSegment1DrawingObject);
@@ -358,8 +358,8 @@ void bridgeHoleBuildCircleDrawSketch1(Sketch sketch, ICirclePtr innerCircle, Bri
     }
 
     ILineSegmentPtr lineSegment2(lineSegments->Add());
-    lineSegment2->X1 = outerCircle->Xc + 1; lineSegment2->Y1 = outerCircle->Yc + 1;
-    lineSegment2->X2 = outerCircle->Xc - 1; lineSegment2->Y2 = outerCircle->Yc + 1;
+    lineSegment2->X1 = outerCircle->Xc + innerCircle->Radius; lineSegment2->Y1 = outerCircle->Yc + innerCircle->Radius;
+    lineSegment2->X2 = outerCircle->Xc - innerCircle->Radius; lineSegment2->Y2 = outerCircle->Yc + innerCircle->Radius;
     lineSegment2->Update();
     IDrawingObjectPtr lineSegment2DrawingObject(lineSegment2);
     IDrawingObject1Ptr lineSegment2DrawingObject1(lineSegment2DrawingObject);
