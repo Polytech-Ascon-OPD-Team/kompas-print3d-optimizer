@@ -39,19 +39,21 @@ void optimizeElephantFoot(KompasObjectPtr kompas, ksFaceDefinitionPtr face, Plan
 		}
 	}
 	for (std::set<ksEdgeDefinitionPtr>::iterator iter = edgesTargets.begin(); iter != edgesTargets.end(); iter++) {
-		ksEntityPtr chamferEntity(part->NewEntity(o3d_chamfer));
-		ksChamferDefinitionPtr chamfer(chamferEntity->GetDefinition());
-		ksEntityCollectionPtr array(chamfer->array());
-		chamfer->SetChamferParam(true, width, width);
-		array->Add(*iter);
-		chamferEntity->hidden = true;
-		bool isCreated = chamferEntity->Create();
-		if (isCreated) {
-			macroElement->Add(chamferEntity);
-		} else {
-			array->Clear();
+		ksEntityCollectionPtr allEdgesCollection(feature->EntityCollection(o3d_edge));
+		if (allEdgesCollection->FindIt((*iter)->GetEntity()) != -1) {
+			ksEntityPtr chamferEntity(part->NewEntity(o3d_chamfer));
+			ksChamferDefinitionPtr chamfer(chamferEntity->GetDefinition());
+			ksEntityCollectionPtr array(chamfer->array());
+			chamfer->SetChamferParam(true, width, width);
+			array->Add((*iter));
+			chamferEntity->hidden = true;
+			bool isCreated = chamferEntity->Create();
+			if (isCreated) {
+				macroElement->Add(chamferEntity);
+			} else {
+				array->Clear();
+			}
 		}
-
 	}
 	macroElementEntity->Update();
 	document3d->RebuildDocument();
