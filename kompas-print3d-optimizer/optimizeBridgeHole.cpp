@@ -4,6 +4,9 @@
 
 #include <list>
 
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 #include "utils.hpp"
 #include "kompasUtils.hpp"
 
@@ -270,6 +273,20 @@ std::list<BridgeHoleBuildTarget> getBridgeHoleBuildTargets(ksPartPtr part, ksFac
 
         if (!loopIsCircle(innerLoop) || !isOuterLoopForBuild(outerLoop)) {
             continue;
+        }
+
+        if (loopIsCircle(outerLoop)) {
+            ksEdgeCollectionPtr innerEdges(innerLoop->EdgeCollection());
+            ksEdgeDefinitionPtr innerEdge(innerEdges->GetByIndex(0));
+            double innerRadius = innerEdge->GetLength(ksLengthUnitsEnum::ksLUnMM) / (2 * M_PI);
+
+            ksEdgeCollectionPtr outerEdges(outerLoop->EdgeCollection());
+            ksEdgeDefinitionPtr outerEdge(outerEdges->GetByIndex(0));
+            double outerRadius = outerEdge->GetLength(ksLengthUnitsEnum::ksLUnMM) / (2 * M_PI);
+
+            if ((2 * innerRadius * innerRadius) >= (outerRadius * outerRadius)) {
+                continue;
+            }
         }
 
         if (checkHoleLoop(face, innerLoop, printFace, measurer)) {
