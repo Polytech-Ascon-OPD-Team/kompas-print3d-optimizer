@@ -5,6 +5,20 @@
 #import "kAPI5.tlb" no_namespace named_guids rename( "min", "Imin" ) rename( "max", "Imax" ) rename( "ksFragmentLibrary", "ksIFragmentLibrary" )
 
 #include "kompasUtils.hpp"
+#include "utils.hpp"
+
+double getCylinderOrTorusRadius(ksFaceDefinitionPtr face) {
+    if (face->IsCylinder()) {
+        double height = 0.0, radius = 0.0;
+        face->GetCylinderParam(&height, &radius);
+        return radius;
+    } else if (face->IsTorus()) {
+        ksSurfacePtr surface(face->GetSurface());
+        ksTorusParamPtr torusParam(surface->GetSurfaceParam());
+        return torusParam->radius;
+    }
+    return 0.0;
+}
 
 std::list<RoundingHorizontalEdgeTarget> getRoundingHorizontalEdgesTargets(ksFaceDefinitionPtr printFace) {
     std::list<RoundingHorizontalEdgeTarget> targets;
@@ -14,6 +28,12 @@ std::list<RoundingHorizontalEdgeTarget> getRoundingHorizontalEdgesTargets(ksFace
         ksLoopPtr loop(loops->GetByIndex(loopIndex));
 
         RoundingHorizontalEdgeTarget target;
+        double radius = 0.0;
+
+        bool firstEdgeInTarget = false;
+        bool firstTargetInLoopCompleted = false;
+        double firstEdgeRadius = 0.0;
+        std::list<RoundingHorizontalEdgeTarget>::iterator targetWithFirstEdge;
 
         ksEdgeCollectionPtr edges(loop->EdgeCollection());
         for (int edgeIndex = 0; edgeIndex < edges->GetCount(); edgeIndex++) {
@@ -25,15 +45,41 @@ std::list<RoundingHorizontalEdgeTarget> getRoundingHorizontalEdgesTargets(ksFace
             }
 
             if ((edge->IsStraight() && roundingFace->IsCylinder()) ||
-                ((edge->IsCircle() || edge->IsArc()) && roundingFace->IsTorus())) {
+                    ((edge->IsCircle() || edge->IsArc()) && roundingFace->IsTorus())) {
+                if (target.empty()) {
+                    radius = getCylinderOrTorusRadius(roundingFace);
+                } else if (!doubleEqual(radius, getCylinderOrTorusRadius(roundingFace))) {
+                    targets.push_back(target);
+                    target = RoundingHorizontalEdgeTarget();
+                    
+                    if (firstEdgeInTarget && !firstTargetInLoopCompleted) {
+                        targetWithFirstEdge = --targets.end();
+                    }
+                    firstTargetInLoopCompleted = true;
+                }
                 target.push_back(edge);
+                
+                if (edgeIndex == 0) {
+                    firstEdgeInTarget = true;
+                    firstEdgeRadius = radius;
+                }
             } else if (!target.empty()) {
                 targets.push_back(target);
                 target = RoundingHorizontalEdgeTarget();
+                
+                if (firstEdgeInTarget && !firstTargetInLoopCompleted) {
+                    targetWithFirstEdge = --targets.end();
+                }
+                firstTargetInLoopCompleted = true;
             }
         }
 
         if (!target.empty()) {
+            if (firstEdgeInTarget && firstTargetInLoopCompleted && doubleEqual(firstEdgeRadius, radius)) {
+                RoundingHorizontalEdgeTarget firstTarget = *(targetWithFirstEdge);
+                targets.erase(targetWithFirstEdge);
+                target.insert(target.cbegin(), firstTarget.cbegin(), firstTarget.cend());
+            }
             targets.push_back(target);
         }
     }
@@ -43,6 +89,18 @@ std::list<RoundingHorizontalEdgeTarget> getRoundingHorizontalEdgesTargets(ksFace
 void optimizeRoundingHorizontalEdges(ksPartPtr part, ksFaceDefinitionPtr printFace) {
     std::list<RoundingHorizontalEdgeTarget> targets = getRoundingHorizontalEdgesTargets(printFace);
 
+    // Подсвечиваем цели.   Отладка!
+    KompasObjectPtr kompas(kompasInit());
+    ksDocument3DPtr document3d(kompas->ActiveDocument3D());
+    ksChooseMngPtr chooseMng(document3d->GetChooseMng());
+    for (RoundingHorizontalEdgeTarget target : targets) {
+        chooseMng->UnChooseAll();
+        for (ksEdgeDefinitionPtr edge : target) {
+            chooseMng->Choose(edge);
+        }
+        _getwch();
+    }
+
     for (RoundingHorizontalEdgeTarget target : targets) {
         // Создаем плоскость для эскиза
         ksEntityPtr sketchPlane(part->NewEntity(Obj3dType::o3d_planePerpendicular));
@@ -50,7 +108,7 @@ void optimizeRoundingHorizontalEdges(ksPartPtr part, ksFaceDefinitionPtr printFa
         sketchPlaneDef->SetEdge(target.front());
         sketchPlaneDef->SetPoint(target.front()->GetVertex(true));
         sketchPlane->Create();
-
+        
         // Создаем эскиз
         
         // Протягиваем эскиз по траектории

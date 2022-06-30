@@ -9,8 +9,9 @@
 
 using RoundingHorizontalEdgeTarget = std::list<ksEdgeDefinitionPtr>;
 
-std::list<RoundingHorizontalEdgeTarget> getRoundingHorizontalEdgesTargets(ksFaceDefinitionPtr printFace);
+double getCylinderOrTorusRadius(ksFaceDefinitionPtr face);
 
+std::list<RoundingHorizontalEdgeTarget> getRoundingHorizontalEdgesTargets(ksFaceDefinitionPtr printFace);
 void optimizeRoundingHorizontalEdges(ksPartPtr part, ksFaceDefinitionPtr printFace);
 
 #endif /* OPTIMIZE_ROUNDING_HORIZONTAL_EDGES_HPP */
