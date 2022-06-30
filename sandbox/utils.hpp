@@ -49,6 +49,6 @@ struct Sketch {
     IKompasDocument2DPtr document2d_api7;
 };
 
-Sketch createSketch(KompasObjectPtr kompas, ksPartPtr part, ksFaceDefinitionPtr face);
+Sketch createSketch(KompasObjectPtr kompas, ksPartPtr part, IDispatchPtr plane);
 
 #endif /* UTILS_HPP */
