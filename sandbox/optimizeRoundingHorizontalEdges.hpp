@@ -7,7 +7,10 @@
 #import "ksConstants3D.tlb" no_namespace named_guids
 #import "kAPI5.tlb" no_namespace named_guids rename( "min", "Imin" ) rename( "max", "Imax" ) rename( "ksFragmentLibrary", "ksIFragmentLibrary" )
 
-using RoundingHorizontalEdgeTarget = std::list<ksEdgeDefinitionPtr>;
+struct RoundingHorizontalEdgeTarget {
+    std::list<ksEdgeDefinitionPtr> trajectory;
+    ksFaceDefinitionPtr roundingFace;
+};
 
 double getCylinderOrTorusRadius(ksFaceDefinitionPtr face);
 

@@ -46,8 +46,9 @@ std::list<RoundingHorizontalEdgeTarget> getRoundingHorizontalEdgesTargets(ksFace
 
             if ((edge->IsStraight() && roundingFace->IsCylinder()) ||
                     ((edge->IsCircle() || edge->IsArc()) && roundingFace->IsTorus())) {
-                if (target.empty()) {
+                if (target.trajectory.empty()) {
                     radius = getCylinderOrTorusRadius(roundingFace);
+                    target.roundingFace = roundingFace;
                 } else if (!doubleEqual(radius, getCylinderOrTorusRadius(roundingFace))) {
                     targets.push_back(target);
                     target = RoundingHorizontalEdgeTarget();
@@ -57,13 +58,13 @@ std::list<RoundingHorizontalEdgeTarget> getRoundingHorizontalEdgesTargets(ksFace
                     }
                     firstTargetInLoopCompleted = true;
                 }
-                target.push_back(edge);
+                target.trajectory.push_back(edge);
                 
                 if (edgeIndex == 0) {
                     firstEdgeInTarget = true;
                     firstEdgeRadius = radius;
                 }
-            } else if (!target.empty()) {
+            } else if (!target.trajectory.empty()) {
                 targets.push_back(target);
                 target = RoundingHorizontalEdgeTarget();
                 
@@ -74,11 +75,11 @@ std::list<RoundingHorizontalEdgeTarget> getRoundingHorizontalEdgesTargets(ksFace
             }
         }
 
-        if (!target.empty()) {
+        if (!target.trajectory.empty()) {
             if (firstEdgeInTarget && firstTargetInLoopCompleted && doubleEqual(firstEdgeRadius, radius)) {
                 RoundingHorizontalEdgeTarget firstTarget = *(targetWithFirstEdge);
                 targets.erase(targetWithFirstEdge);
-                target.insert(target.cbegin(), firstTarget.cbegin(), firstTarget.cend());
+                target.trajectory.insert(target.trajectory.cbegin(), firstTarget.trajectory.cbegin(), firstTarget.trajectory.cend());
             }
             targets.push_back(target);
         }
@@ -95,9 +96,12 @@ void optimizeRoundingHorizontalEdges(ksPartPtr part, ksFaceDefinitionPtr printFa
     ksChooseMngPtr chooseMng(document3d->GetChooseMng());
     for (RoundingHorizontalEdgeTarget target : targets) {
         chooseMng->UnChooseAll();
-        for (ksEdgeDefinitionPtr edge : target) {
+        for (ksEdgeDefinitionPtr edge : target.trajectory) {
             chooseMng->Choose(edge);
         }
+        _getwch();
+        chooseMng->UnChooseAll();
+        chooseMng->Choose(target.roundingFace);
         _getwch();
     }
 
@@ -105,11 +109,12 @@ void optimizeRoundingHorizontalEdges(ksPartPtr part, ksFaceDefinitionPtr printFa
         // Создаем плоскость для эскиза
         ksEntityPtr sketchPlane(part->NewEntity(Obj3dType::o3d_planePerpendicular));
         ksPlanePerpendicularDefinitionPtr sketchPlaneDef(sketchPlane->GetDefinition());
-        sketchPlaneDef->SetEdge(target.front());
-        sketchPlaneDef->SetPoint(target.front()->GetVertex(true));
+        sketchPlaneDef->SetEdge(target.trajectory.front());
+        sketchPlaneDef->SetPoint(target.trajectory.front()->GetVertex(true));
         sketchPlane->Create();
         
         // Создаем эскиз
+        
         
         // Протягиваем эскиз по траектории
         // ksBossEvolutionDefinition "Обход с гладкой стыковкой"

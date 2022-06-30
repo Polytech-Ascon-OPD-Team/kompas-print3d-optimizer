@@ -8,6 +8,7 @@
 #include "optimizeOverhangingFaces.hpp"
 #include "optimizeCircleHorizontalHoles.hpp"
 #include "optimizeBridgeHole.hpp"
+#include "optimizeRoundingHorizontalEdges.hpp"
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -118,8 +119,37 @@ void performBridgeHolesFillOptimization(KompasObjectPtr kompas) {
     }
 }
 
+int main() { // Отладка!
+    CoInitialize(nullptr);
+    KompasObjectPtr kompas = kompasInit();
 
-int main() {
+    ksDocument3DPtr document3d = kompas->ActiveDocument3D();
+    ksChooseMngPtr chooseMng(document3d->GetChooseMng());
+
+    ksPartPtr part(document3d->GetPart(pTop_Part));
+
+    ksBodyPtr body = part->GetMainBody();
+    ksFaceCollectionPtr faces = body->FaceCollection();
+    int facesCount = faces->GetCount();
+
+    ksFaceDefinitionPtr printFace;
+
+    // Задаем грань стола 3д принтера. Только для тестирования
+    for (int printFaceIndex = 0; printFaceIndex < facesCount; printFaceIndex++) {
+        printFace = faces->GetByIndex(printFaceIndex);
+        if (abs(printFace->GetArea(ksLUnMM) - 1052) < 1) {
+            break;
+        }
+    }
+
+    optimizeRoundingHorizontalEdges(part, printFace);
+
+
+
+    return 0;
+}
+
+int main1() {
     CoInitialize(nullptr);
     KompasObjectPtr kompas = kompasInit();
     if (!kompas) {
