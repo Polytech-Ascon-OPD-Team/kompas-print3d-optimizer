@@ -3,6 +3,8 @@
 
 #include <list>
 
+#include "utils.hpp"
+
 #import "ksconstants.tlb" no_namespace named_guids
 #import "ksConstants3D.tlb" no_namespace named_guids
 #import "kAPI5.tlb" no_namespace named_guids rename( "min", "Imin" ) rename( "max", "Imax" ) rename( "ksFragmentLibrary", "ksIFragmentLibrary" )
@@ -15,6 +17,7 @@ struct RoundingHorizontalEdgeTarget {
 double getCylinderOrTorusRadius(ksFaceDefinitionPtr face);
 
 std::list<RoundingHorizontalEdgeTarget> getRoundingHorizontalEdgesTargets(ksFaceDefinitionPtr printFace);
-void optimizeRoundingHorizontalEdges(ksPartPtr part, ksFaceDefinitionPtr printFace);
+void drawSketch(Sketch sketch, RoundingHorizontalEdgeTarget target);
+void optimizeRoundingHorizontalEdges(KompasObjectPtr kompas, ksPartPtr part, ksFaceDefinitionPtr printFace);
 
 #endif /* OPTIMIZE_ROUNDING_HORIZONTAL_EDGES_HPP */

@@ -87,11 +87,44 @@ std::list<RoundingHorizontalEdgeTarget> getRoundingHorizontalEdgesTargets(ksFace
     return targets;
 }
 
-void optimizeRoundingHorizontalEdges(ksPartPtr part, ksFaceDefinitionPtr printFace) {
+void drawSketch(Sketch sketch, RoundingHorizontalEdgeTarget target) {
+    IViewsAndLayersManagerPtr viewsAndLayersManager(sketch.document2d_api7->ViewsAndLayersManager);
+    IViewsPtr views(viewsAndLayersManager->Views);
+    IViewPtr view(views->ActiveView);
+    IDrawingContainerPtr drawingContainer(view);
+    
+    sketch.definition->AddProjectionOf(target.trajectory.front()->GetVertex(true));
+    IPointsPtr points(drawingContainer->Points);
+    IPointPtr startPoint(points->GetPoint(0));
+
+    sketch.definition->AddProjectionOf(target.roundingFace);
+    IArcsPtr arcs(drawingContainer->Arcs);
+    IArcPtr roundingArc = nullptr;
+    for (int i = 0; i < arcs->GetCount(); i++) {
+        IArcPtr arc(arcs->GetArc(i));
+        if (!roundingArc && ((doubleEqual(startPoint->X, arc->X1) && doubleEqual(startPoint->Y, arc->Y1)) ||
+                (doubleEqual(startPoint->X, arc->X2) && doubleEqual(startPoint->Y, arc->Y2)))) {
+            roundingArc = arc;
+        } else {
+            arc->Style = ksCurveStyleEnum::ksCSThin;
+            arc->Update();
+        }
+    }
+    
+    ILineSegmentsPtr lineSegments(drawingContainer->LineSegments);
+    for (int i = 0; i < lineSegments->GetCount(); i++) {
+        ILineSegmentPtr lineSegment(lineSegments->GetLineSegment(i));
+        lineSegment->Style = ksCurveStyleEnum::ksCSThin;
+        lineSegment->Update();
+    }
+
+}
+
+void optimizeRoundingHorizontalEdges(KompasObjectPtr kompas, ksPartPtr part, ksFaceDefinitionPtr printFace) {
     std::list<RoundingHorizontalEdgeTarget> targets = getRoundingHorizontalEdgesTargets(printFace);
 
     // Подсвечиваем цели.   Отладка!
-    KompasObjectPtr kompas(kompasInit());
+    /*
     ksDocument3DPtr document3d(kompas->ActiveDocument3D());
     ksChooseMngPtr chooseMng(document3d->GetChooseMng());
     for (RoundingHorizontalEdgeTarget target : targets) {
@@ -104,6 +137,7 @@ void optimizeRoundingHorizontalEdges(ksPartPtr part, ksFaceDefinitionPtr printFa
         chooseMng->Choose(target.roundingFace);
         _getwch();
     }
+    */
 
     for (RoundingHorizontalEdgeTarget target : targets) {
         // Создаем плоскость для эскиза
@@ -114,7 +148,9 @@ void optimizeRoundingHorizontalEdges(ksPartPtr part, ksFaceDefinitionPtr printFa
         sketchPlane->Create();
         
         // Создаем эскиз
-        
+        Sketch sketch = createSketch(kompas, part, sketchPlane);
+        drawSketch(sketch, target);
+        sketch.definition->EndEdit();
         
         // Протягиваем эскиз по траектории
         // ksBossEvolutionDefinition "Обход с гладкой стыковкой"
