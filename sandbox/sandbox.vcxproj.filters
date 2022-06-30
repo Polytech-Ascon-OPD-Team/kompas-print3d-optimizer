@@ -15,10 +15,25 @@
     <ClCompile Include="kompasUtils.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="optimizeBridgeHole.cpp">
+    <ClCompile Include="selectPlane.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizeRounding.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizeElephantFoot.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizeOverhangingFaces.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="utils.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizeCircleHorizontalHoles.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizeBridgeHole.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="optimizeRoundingHorizontalEdges.cpp">
@@ -29,10 +44,25 @@
     <ClInclude Include="kompasUtils.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="optimizeBridgeHole.hpp">
+    <ClInclude Include="selectPlane.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="optimizeRounding.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="optimizeElephantFoot.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="optimizeOverhangingFaces.hpp">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="utils.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="optimizeCircleHorizontalHoles.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="optimizeBridgeHole.hpp">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="optimizeRoundingHorizontalEdges.hpp">

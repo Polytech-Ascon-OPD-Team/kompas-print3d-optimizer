@@ -1,4 +1,4 @@
-#include "kompasUtils.hpp"
+ï»¿#include "kompasUtils.hpp"
 
 #include <Windows.h>
 #include <iostream>
@@ -34,7 +34,7 @@ bool isKompasRun()
 
 KompasObjectPtr kompasInit() {
     if (!isKompasInstalled()) {
-        std::cerr << "Êîìïàñ íå óñòàíîâëåí" << "\n";
+        std::cerr << "ÐšÐ¾Ð¼Ð¿Ð°Ñ Ð½Ðµ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²Ð»ÐµÐ½" << "\n";
         return nullptr;
     }
     KompasObjectPtr kompas;
@@ -47,13 +47,4 @@ KompasObjectPtr kompasInit() {
     return kompas;
 }
 
-Sketch createSketch(KompasObjectPtr kompas, ksPartPtr part, ksFaceDefinitionPtr face) {
-    ksEntityPtr sketchEntity(part->NewEntity(o3d_sketch));
-    ksSketchDefinitionPtr sketchDef(sketchEntity->GetDefinition());
-    sketchDef->SetPlane(face);
-    sketchEntity->Create();
-    ksDocument2DPtr sketchEdit(sketchDef->BeginEdit());
-    IKompasDocument2DPtr sketchEdit_api7(kompas->TransferInterface(sketchEdit, ksAPI7Dual, 0));
 
-    return Sketch{ sketchEntity, sketchDef, sketchEdit, sketchEdit_api7 };
-}

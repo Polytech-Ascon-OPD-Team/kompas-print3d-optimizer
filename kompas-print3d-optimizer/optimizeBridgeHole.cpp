@@ -1,3 +1,5 @@
+#include "StdAfx.h"
+
 #include "optimizeBridgeHole.hpp"
 
 #include <list>

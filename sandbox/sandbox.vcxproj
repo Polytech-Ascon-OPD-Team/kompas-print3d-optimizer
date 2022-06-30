@@ -144,15 +144,27 @@
   <ItemGroup>
     <ClCompile Include="kompasUtils.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="optimizeElephantFoot.cpp" />
+    <ClCompile Include="optimizeCircleHorizontalHoles.cpp" />
+    <ClCompile Include="optimizeOverhangingFaces.cpp" />
+    <ClCompile Include="optimizeRounding.cpp" />
+    <ClCompile Include="selectPlane.cpp" />
     <ClCompile Include="optimizeBridgeHole.cpp" />
     <ClCompile Include="optimizeRoundingHorizontalEdges.cpp" />
     <ClCompile Include="utils.cpp" />
+
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kompasUtils.hpp" />
+    <ClInclude Include="optimizeCircleHorizontalHoles.hpp" />
+    <ClInclude Include="optimizeElephantFoot.hpp" />
+    <ClInclude Include="optimizeOverhangingFaces.hpp" />
+    <ClInclude Include="optimizeRounding.hpp" />
+    <ClInclude Include="selectPlane.hpp" />
+    <ClInclude Include="utils.hpp" />
     <ClInclude Include="optimizeBridgeHole.hpp" />
     <ClInclude Include="optimizeRoundingHorizontalEdges.hpp" />
-    <ClInclude Include="utils.hpp" />
+
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

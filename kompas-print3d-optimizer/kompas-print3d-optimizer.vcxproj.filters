@@ -10,6 +10,21 @@
     <ClInclude Include="kompasUtils.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="selectPlane.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="optimizeRounding.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="optimizeElephantFoot.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="optimizeBridgeHole.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="utils.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mainLibrary.cpp">
@@ -22,6 +37,21 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="kompasUtils.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="selectPlane.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizeRounding.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizeElephantFoot.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizeBridgeHole.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="utils.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
