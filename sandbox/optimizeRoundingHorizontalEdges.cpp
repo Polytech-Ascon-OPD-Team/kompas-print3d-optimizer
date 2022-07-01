@@ -1,5 +1,8 @@
 #include "optimizeRoundingHorizontalEdges.hpp"
 
+#include <sstream>
+#include <atlbase.h>
+
 #import "ksconstants.tlb" no_namespace named_guids
 #import "ksConstants3D.tlb" no_namespace named_guids
 #import "kAPI5.tlb" no_namespace named_guids rename( "min", "Imin" ) rename( "max", "Imax" ) rename( "ksFragmentLibrary", "ksIFragmentLibrary" )
@@ -87,7 +90,12 @@ std::list<RoundingHorizontalEdgeTarget> getRoundingHorizontalEdgesTargets(ksFace
     return targets;
 }
 
-void drawSketch(Sketch sketch, RoundingHorizontalEdgeTarget target) {
+void drawSketch(Sketch sketch, RoundingHorizontalEdgeTarget target, double overhangThreshold) {
+    std::ostringstream oss;
+    oss << (180.0 - overhangThreshold);
+    CComBSTR temp(oss.str().c_str());
+    _bstr_t expression = temp.Detach();
+
     IViewsAndLayersManagerPtr viewsAndLayersManager(sketch.document2d_api7->ViewsAndLayersManager);
     IViewsPtr views(viewsAndLayersManager->Views);
     IViewPtr view(views->ActiveView);
@@ -100,15 +108,18 @@ void drawSketch(Sketch sketch, RoundingHorizontalEdgeTarget target) {
     sketch.definition->AddProjectionOf(target.roundingFace);
     IArcsPtr arcs(drawingContainer->Arcs);
     IArcPtr roundingArc = nullptr;
+    bool startPointIs1 = false;
     for (int i = 0; i < arcs->GetCount(); i++) {
         IArcPtr arc(arcs->GetArc(i));
         if (!roundingArc && ((doubleEqual(startPoint->X, arc->X1) && doubleEqual(startPoint->Y, arc->Y1)) ||
                 (doubleEqual(startPoint->X, arc->X2) && doubleEqual(startPoint->Y, arc->Y2)))) {
             roundingArc = arc;
-        } else {
-            arc->Style = ksCurveStyleEnum::ksCSThin;
-            arc->Update();
+            if (doubleEqual(startPoint->X, arc->X1)) {
+                startPointIs1 = true;
+            }
         }
+        arc->Style = ksCurveStyleEnum::ksCSThin;
+        arc->Update();
     }
     
     ILineSegmentsPtr lineSegments(drawingContainer->LineSegments);
@@ -118,9 +129,93 @@ void drawSketch(Sketch sketch, RoundingHorizontalEdgeTarget target) {
         lineSegment->Update();
     }
 
+    ILineSegmentPtr lineSeg1(lineSegments->Add());
+    lineSeg1->X1 = startPoint->X; lineSeg1->Y1 = startPoint->Y;
+    if (startPointIs1) {
+        lineSeg1->X2 = roundingArc->X2; lineSeg1->Y2 = roundingArc->Y2;
+    } else {
+        lineSeg1->X2 = roundingArc->X1; lineSeg1->Y2 = roundingArc->Y1;
+    }
+    lineSeg1->Update();
+
+    IDrawingObjectPtr lineSeg1DrawingObject(lineSeg1);
+    IDrawingObject1Ptr lineSeg1DrawingObject1(lineSeg1DrawingObject);
+    {
+        IParametriticConstraintPtr constraint(lineSeg1DrawingObject1->NewConstraint());
+        constraint->ConstraintType = ksConstraintTypeEnum::ksCMergePoints;
+        constraint->Index = 0;
+        constraint->Partner = static_cast<IDispatch*>(startPoint);
+        constraint->Create();
+    }
+    {
+        IParametriticConstraintPtr constraint(lineSeg1DrawingObject1->NewConstraint());
+        constraint->ConstraintType = ksConstraintTypeEnum::ksCTangentTwoCurves;
+        constraint->Partner = static_cast<IDispatch*>(roundingArc);
+        constraint->Create();
+    }
+
+    ILineSegmentPtr lineSeg2(lineSegments->Add());
+    lineSeg2->X1 = lineSeg1->X2; lineSeg2->Y1 = lineSeg1->Y2;
+    if (startPointIs1) {
+        lineSeg2->X2 = roundingArc->X2; lineSeg2->Y2 = roundingArc->Y2;
+    } else {
+        lineSeg2->X2 = roundingArc->X1; lineSeg2->Y2 = roundingArc->Y1;
+    }
+    lineSeg2->Update();
+
+    IDrawingObjectPtr lineSeg2DrawingObject(lineSeg2);
+    IDrawingObject1Ptr lineSeg2DrawingObject1(lineSeg2DrawingObject);
+    {
+        IParametriticConstraintPtr constraint(lineSeg2DrawingObject1->NewConstraint());
+        constraint->ConstraintType = ksConstraintTypeEnum::ksCMergePoints;
+        constraint->Index = 0;
+        constraint->Partner = static_cast<IDispatch*>(lineSeg1);
+        constraint->PartnerIndex = 1;
+        constraint->Create();
+    }
+    {
+        IParametriticConstraintPtr constraint(lineSeg2DrawingObject1->NewConstraint());
+        constraint->ConstraintType = ksConstraintTypeEnum::ksCTangentTwoCurves;
+        constraint->Partner = static_cast<IDispatch*>(roundingArc);
+        constraint->Create();
+    }
+    {
+        IParametriticConstraintPtr constraint(lineSeg2DrawingObject1->NewConstraint());
+        constraint->ConstraintType = ksConstraintTypeEnum::ksCPointOnCurve;
+        constraint->Index = 1;
+        constraint->Partner = static_cast<IDispatch*>(roundingArc);
+        constraint->Create();
+    }
+
+    // Устанавливаем размеры
+    ISymbols2DContainerPtr symbols2dContainer(view);
+    IAngleDimensionsPtr angleDimensions(symbols2dContainer->AngleDimensions);
+
+    IAngleDimensionPtr angleDim(angleDimensions->Add(DrawingObjectTypeEnum::ksDrADimension));
+    angleDim->DimensionType = ksAngleDimTypeEnum::ksADMinAngle;
+    angleDim->BaseObject1 = lineSeg1DrawingObject;
+    angleDim->BaseObject2 = lineSeg2DrawingObject;
+    angleDim->Radius = 0;
+    angleDim->X3 = (lineSeg1->X1 + lineSeg2->X2) / 2;
+    angleDim->Y3 = (lineSeg1->Y1 + lineSeg2->Y2) / 2;
+    angleDim->Update();
+    IDrawingObject1Ptr angleDimDrawingObject1(angleDim);
+    {
+        IParametriticConstraintPtr constraint(angleDimDrawingObject1->NewConstraint());
+        constraint->ConstraintType = ksConstraintTypeEnum::ksCFixedDim;
+        constraint->Create();
+    }
+    {
+        IParametriticConstraintPtr constraint(angleDimDrawingObject1->NewConstraint());
+        constraint->ConstraintType = ksConstraintTypeEnum::ksCDimWithVariable;
+        constraint->Expression = expression;
+        constraint->Create();
+    }
+
+
 }
 
-void optimizeRoundingHorizontalEdges(KompasObjectPtr kompas, ksPartPtr part, ksFaceDefinitionPtr printFace) {
+void optimizeRoundingHorizontalEdges(KompasObjectPtr kompas, ksPartPtr part, ksFaceDefinitionPtr printFace, double overhangThreshold) {
     std::list<RoundingHorizontalEdgeTarget> targets = getRoundingHorizontalEdgesTargets(printFace);
 
     // Подсвечиваем цели.   Отладка!
@@ -149,7 +244,7 @@ void optimizeRoundingHorizontalEdges(KompasObjectPtr kompas, ksPartPtr part, ksF
         
         // Создаем эскиз
         Sketch sketch = createSketch(kompas, part, sketchPlane);
-        drawSketch(sketch, target);
+        drawSketch(sketch, target, overhangThreshold);
         sketch.definition->EndEdit();
         
         // Протягиваем эскиз по траектории

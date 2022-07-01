@@ -142,9 +142,7 @@ int main() { // Отладка!
         }
     }
 
-    optimizeRoundingHorizontalEdges(kompas, part, printFace);
-
-
+    optimizeRoundingHorizontalEdges(kompas, part, printFace, 50.0);
 
     return 0;
 }

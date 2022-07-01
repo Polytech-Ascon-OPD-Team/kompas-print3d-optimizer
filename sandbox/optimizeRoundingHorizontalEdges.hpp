@@ -17,7 +17,7 @@ struct RoundingHorizontalEdgeTarget {
 double getCylinderOrTorusRadius(ksFaceDefinitionPtr face);
 
 std::list<RoundingHorizontalEdgeTarget> getRoundingHorizontalEdgesTargets(ksFaceDefinitionPtr printFace);
-void drawSketch(Sketch sketch, RoundingHorizontalEdgeTarget target);
-void optimizeRoundingHorizontalEdges(KompasObjectPtr kompas, ksPartPtr part, ksFaceDefinitionPtr printFace);
+void drawSketch(Sketch sketch, RoundingHorizontalEdgeTarget target, double overhangThreshold);
+void optimizeRoundingHorizontalEdges(KompasObjectPtr kompas, ksPartPtr part, ksFaceDefinitionPtr printFace, double overhangThreshold);
 
 #endif /* OPTIMIZE_ROUNDING_HORIZONTAL_EDGES_HPP */
