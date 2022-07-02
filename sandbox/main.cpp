@@ -8,7 +8,7 @@
 #include "optimizeOverhangingFaces.hpp"
 #include "optimizeCircleHorizontalHoles.hpp"
 #include "optimizeBridgeHole.hpp"
-#include "optimizeRoundingHorizontalEdges.hpp"
+#include "optimizeRoundingEdgesOnPrintFace.hpp"
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -142,7 +142,7 @@ int main() { // Отладка!
         }
     }
 
-    optimizeRoundingHorizontalEdges(kompas, part, printFace, 50.0);
+    optimizeRoundingEdgesOnPrintFace(kompas, part, printFace, 50.0);
 
     return 0;
 }

@@ -36,7 +36,7 @@
     <ClCompile Include="optimizeBridgeHole.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="optimizeRoundingHorizontalEdges.cpp">
+    <ClCompile Include="optimizeRoundingEdgesOnPrintFace.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
@@ -65,7 +65,7 @@
     <ClInclude Include="optimizeBridgeHole.hpp">
       <Filter>include</Filter>
     </ClInclude>
-    <ClInclude Include="optimizeRoundingHorizontalEdges.hpp">
+    <ClInclude Include="optimizeRoundingEdgesOnPrintFace.hpp">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

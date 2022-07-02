@@ -1,4 +1,4 @@
-#include "optimizeRoundingHorizontalEdges.hpp"
+#include "optimizeRoundingEdgesOnPrintFace.hpp"
 
 #include <sstream>
 #include <atlbase.h>
@@ -26,20 +26,20 @@ double getCylinderOrTorusRadius(ksFaceDefinitionPtr face) {
     return 0.0;
 }
 
-std::list<RoundingHorizontalEdgeTarget> getRoundingHorizontalEdgesTargets(ksFaceDefinitionPtr printFace) {
-    std::list<RoundingHorizontalEdgeTarget> targets;
+std::list<RoundingEdgeOnPrintFaceTarget> getRoundingEdgesOnPrintFaceTargets(ksFaceDefinitionPtr printFace) {
+    std::list<RoundingEdgeOnPrintFaceTarget> targets;
 
     ksLoopCollectionPtr loops(printFace->LoopCollection());
     for (int loopIndex = 0; loopIndex < loops->GetCount(); loopIndex++) {
         ksLoopPtr loop(loops->GetByIndex(loopIndex));
 
-        RoundingHorizontalEdgeTarget target;
+        RoundingEdgeOnPrintFaceTarget target;
         double radius = 0.0;
 
         bool firstEdgeInTarget = false;
         bool firstTargetInLoopCompleted = false;
         double firstEdgeRadius = 0.0;
-        std::list<RoundingHorizontalEdgeTarget>::iterator targetWithFirstEdge;
+        std::list<RoundingEdgeOnPrintFaceTarget>::iterator targetWithFirstEdge;
 
         ksEdgeCollectionPtr edges(loop->EdgeCollection());
         for (int edgeIndex = 0; edgeIndex < edges->GetCount(); edgeIndex++) {
@@ -57,7 +57,7 @@ std::list<RoundingHorizontalEdgeTarget> getRoundingHorizontalEdgesTargets(ksFace
                     target.roundingFace = roundingFace;
                 } else if (!doubleEqual(radius, getCylinderOrTorusRadius(roundingFace))) {
                     targets.push_back(target);
-                    target = RoundingHorizontalEdgeTarget();
+                    target = RoundingEdgeOnPrintFaceTarget();
                     
                     if (firstEdgeInTarget && !firstTargetInLoopCompleted) {
                         targetWithFirstEdge = --targets.end();
@@ -72,7 +72,7 @@ std::list<RoundingHorizontalEdgeTarget> getRoundingHorizontalEdgesTargets(ksFace
                 }
             } else if (!target.trajectory.empty()) {
                 targets.push_back(target);
-                target = RoundingHorizontalEdgeTarget();
+                target = RoundingEdgeOnPrintFaceTarget();
                 
                 if (firstEdgeInTarget && !firstTargetInLoopCompleted) {
                     targetWithFirstEdge = --targets.end();
@@ -83,7 +83,7 @@ std::list<RoundingHorizontalEdgeTarget> getRoundingHorizontalEdgesTargets(ksFace
 
         if (!target.trajectory.empty()) {
             if (firstEdgeInTarget && firstTargetInLoopCompleted && doubleEqual(firstEdgeRadius, radius)) {
-                RoundingHorizontalEdgeTarget firstTarget = *(targetWithFirstEdge);
+                RoundingEdgeOnPrintFaceTarget firstTarget = *(targetWithFirstEdge);
                 targets.erase(targetWithFirstEdge);
                 target.trajectory.insert(target.trajectory.cbegin(), firstTarget.trajectory.cbegin(), firstTarget.trajectory.cend());
             }
@@ -93,7 +93,7 @@ std::list<RoundingHorizontalEdgeTarget> getRoundingHorizontalEdgesTargets(ksFace
     return targets;
 }
 
-void drawSketch(Sketch sketch, RoundingHorizontalEdgeTarget target, double overhangThreshold) {
+void drawSketch(Sketch sketch, RoundingEdgeOnPrintFaceTarget target, double overhangThreshold) {
     std::ostringstream oss;
     oss << (180.0 - overhangThreshold);
     CComBSTR temp(oss.str().c_str());
@@ -231,8 +231,8 @@ void drawSketch(Sketch sketch, RoundingHorizontalEdgeTarget target, double overh
     arc->Update();
 }
 
-void optimizeRoundingHorizontalEdges(KompasObjectPtr kompas, ksPartPtr part, ksFaceDefinitionPtr printFace, double overhangThreshold) {
-    std::list<RoundingHorizontalEdgeTarget> targets = getRoundingHorizontalEdgesTargets(printFace);
+void optimizeRoundingEdgesOnPrintFace(KompasObjectPtr kompas, ksPartPtr part, ksFaceDefinitionPtr printFace, double overhangThreshold) {
+    std::list<RoundingEdgeOnPrintFaceTarget> targets = getRoundingEdgesOnPrintFaceTargets(printFace);
 
     // Подсвечиваем цели.   Отладка!
     /*
@@ -256,8 +256,7 @@ void optimizeRoundingHorizontalEdges(KompasObjectPtr kompas, ksPartPtr part, ksF
     macro->StaffVisible = true;
     macroEntity->Create();
 
-    for (RoundingHorizontalEdgeTarget target : targets) {
-
+    for (RoundingEdgeOnPrintFaceTarget target : targets) {
         ksEntityPtr macroElementEntity(part->NewEntity(o3d_MacroObject));
         ksMacro3DDefinitionPtr macroElement(macroElementEntity->GetDefinition());
         macroElementEntity->name = MACRO_NAME_ROUNDING_EDGES_ON_PRINT_FACE_ELEMENT;
