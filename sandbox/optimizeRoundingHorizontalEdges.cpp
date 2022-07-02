@@ -101,6 +101,7 @@ void drawSketch(Sketch sketch, RoundingHorizontalEdgeTarget target, double overh
     IViewPtr view(views->ActiveView);
     IDrawingContainerPtr drawingContainer(view);
     
+    // Добавляем проекции
     sketch.definition->AddProjectionOf(target.trajectory.front()->GetVertex(true));
     IPointsPtr points(drawingContainer->Points);
     IPointPtr startPoint(points->GetPoint(0));
@@ -129,6 +130,7 @@ void drawSketch(Sketch sketch, RoundingHorizontalEdgeTarget target, double overh
         lineSegment->Update();
     }
 
+    // Строим два отрезка
     ILineSegmentPtr lineSeg1(lineSegments->Add());
     lineSeg1->X1 = startPoint->X; lineSeg1->Y1 = startPoint->Y;
     if (startPointIs1) {
@@ -212,7 +214,18 @@ void drawSketch(Sketch sketch, RoundingHorizontalEdgeTarget target, double overh
         constraint->Create();
     }
 
-
+    // Достраиваем эскиз дугой
+    IArcPtr arc(arcs->Add());
+    arc->Xc = roundingArc->Xc; arc->Yc = roundingArc->Yc;
+    arc->X1 = startPoint->X; arc->Y1 = startPoint->Y;
+    arc->X2 = lineSeg2->X2; arc->Y2 = lineSeg2->Y2;
+    arc->Radius = roundingArc->Radius;
+    if (startPointIs1) {
+        arc->Direction = roundingArc->Direction;
+    } else {
+        arc->Direction = !roundingArc->Direction;
+    }
+    arc->Update();
 }
 
 void optimizeRoundingHorizontalEdges(KompasObjectPtr kompas, ksPartPtr part, ksFaceDefinitionPtr printFace, double overhangThreshold) {
@@ -248,8 +261,16 @@ void optimizeRoundingHorizontalEdges(KompasObjectPtr kompas, ksPartPtr part, ksF
         sketch.definition->EndEdit();
         
         // Протягиваем эскиз по траектории
-        // ksBossEvolutionDefinition "Обход с гладкой стыковкой"
-
+        ksEntityPtr evolutionEntity(part->NewEntity(Obj3dType::o3d_bossEvolution));
+        ksBossEvolutionDefinitionPtr evolutionDef(evolutionEntity->GetDefinition());
+        evolutionDef->chooseType = ksChooseType::ksChBodiesAndParts;
+        evolutionDef->sketchShiftType = 1;
+        evolutionDef->SetSketch(sketch.entity);
+        ksEntityCollectionPtr trajectory(evolutionDef->PathPartArray());
+        for (ksEdgeDefinitionPtr edge : target.trajectory) {
+            trajectory->Add(edge);
+        }
+        evolutionEntity->Create();
     }
 
 }
