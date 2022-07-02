@@ -10,6 +10,9 @@
 #include "kompasUtils.hpp"
 #include "utils.hpp"
 
+const char* MACRO_NAME_ROUNDING_EDGES_ON_PRINT_FACE = "Оптимизация скругленных ребер на плоскости печати";
+const char* MACRO_NAME_ROUNDING_EDGES_ON_PRINT_FACE_ELEMENT = "Контур";
+
 double getCylinderOrTorusRadius(ksFaceDefinitionPtr face) {
     if (face->IsCylinder()) {
         double height = 0.0, radius = 0.0;
@@ -247,18 +250,34 @@ void optimizeRoundingHorizontalEdges(KompasObjectPtr kompas, ksPartPtr part, ksF
     }
     */
 
+    ksEntityPtr macroEntity(part->NewEntity(o3d_MacroObject));
+    ksMacro3DDefinitionPtr macro(macroEntity->GetDefinition());
+    macroEntity->name = MACRO_NAME_ROUNDING_EDGES_ON_PRINT_FACE;
+    macro->StaffVisible = true;
+    macroEntity->Create();
+
     for (RoundingHorizontalEdgeTarget target : targets) {
+
+        ksEntityPtr macroElementEntity(part->NewEntity(o3d_MacroObject));
+        ksMacro3DDefinitionPtr macroElement(macroElementEntity->GetDefinition());
+        macroElementEntity->name = MACRO_NAME_ROUNDING_EDGES_ON_PRINT_FACE_ELEMENT;
+        macroElement->StaffVisible = true;
+        macroElementEntity->Create();
+
         // Создаем плоскость для эскиза
         ksEntityPtr sketchPlane(part->NewEntity(Obj3dType::o3d_planePerpendicular));
         ksPlanePerpendicularDefinitionPtr sketchPlaneDef(sketchPlane->GetDefinition());
         sketchPlaneDef->SetEdge(target.trajectory.front());
         sketchPlaneDef->SetPoint(target.trajectory.front()->GetVertex(true));
+        sketchPlane->hidden = true;
         sketchPlane->Create();
+        macroElement->Add(sketchPlane);
         
         // Создаем эскиз
         Sketch sketch = createSketch(kompas, part, sketchPlane);
         drawSketch(sketch, target, overhangThreshold);
         sketch.definition->EndEdit();
+        macroElement->Add(sketch.entity);
         
         // Протягиваем эскиз по траектории
         ksEntityPtr evolutionEntity(part->NewEntity(Obj3dType::o3d_bossEvolution));
@@ -271,6 +290,10 @@ void optimizeRoundingHorizontalEdges(KompasObjectPtr kompas, ksPartPtr part, ksF
             trajectory->Add(edge);
         }
         evolutionEntity->Create();
-    }
+        macroElement->Add(evolutionEntity);
 
+        macroElementEntity->Update();
+        macro->Add(macroElementEntity);
+    }
+    macroEntity->Update();
 }
