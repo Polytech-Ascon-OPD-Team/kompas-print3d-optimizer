@@ -12,6 +12,7 @@
 
 const char* MACRO_NAME_ROUNDING_EDGES_ON_PRINT_FACE = "Оптимизация скругленных ребер на плоскости печати";
 const char* MACRO_NAME_ROUNDING_EDGES_ON_PRINT_FACE_ELEMENT = "Контур";
+const char* MACRO_NAME_ROUNDING_EDGES_ON_PRINT_FACE_ELEMENT_WITH_REWORK = "Контур - ДОРАБОТКА";
 
 double getCylinderOrTorusRadius(ksFaceDefinitionPtr face) {
     if (face->IsCylinder()) {
@@ -26,7 +27,65 @@ double getCylinderOrTorusRadius(ksFaceDefinitionPtr face) {
     return 0.0;
 }
 
-std::list<RoundingEdgeOnPrintFaceTarget> getRoundingEdgesOnPrintFaceTargets(ksFaceDefinitionPtr printFace) {
+bool faceNeedRework(ksFaceDefinitionPtr roundingFace) {
+    if (!roundingFace->IsCylinder() && !roundingFace->IsTorus()) {
+        return true;
+    }
+
+    ksEdgeCollectionPtr edges(roundingFace->EdgeCollection());
+    int edgesCount = edges->GetCount();
+    if (roundingFace->IsCylinder()) {
+        // Если грань цилиндрическая, то два ребра прямые, а другие два дуги
+        if (edgesCount != 4) {
+            return true;
+        }
+        int straightCount = 0, arcCount = 0;
+        for (int i = 0; i < edgesCount; i++) {
+            ksEdgeDefinitionPtr edge(edges->GetByIndex(i));
+            if (edge->IsStraight()) {
+                straightCount++;
+            } else if (edge->IsArc()) {
+                arcCount++;
+            }
+        }
+        return !((straightCount == 2) && (arcCount == 2));
+    } else {
+        // Если грань тороидальная
+        if ((edgesCount == 2) || (edgesCount == 3)) {
+            // Два или три ребра никогда не потребуют доработки
+            // Про грань с тремя ребрами описано далее
+            return false;
+        } else if (edgesCount == 4) {
+            // Если ребра четыре, то они все должны быть дугами
+            for (int i = 0; i < edgesCount; i++) {
+                ksEdgeDefinitionPtr edge(edges->GetByIndex(i));
+                double length = edge->GetLength(ksLengthUnitsEnum::ksLUnMM);
+                // В грани, где должно быть 3 ребра, почему-то присутствует еще одно ребро, длина которого 0
+                // Для этого ребра все функции определения формы этого ребра Is...() возвращают false
+                if (!edge->IsArc() && !doubleEqual(length, 0.0)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        return true;
+    }
+}
+
+bool targetNeedRework(RoundingEdgeOnPrintFaceTarget target) {
+    for (ksEdgeDefinitionPtr edge : target.trajectory) {
+        ksFaceDefinitionPtr roundingFace(edge->GetAdjacentFace(false));
+        if (!roundingFace->IsCylinder() && !roundingFace->IsTorus()) {
+            roundingFace = edge->GetAdjacentFace(true);
+        }
+        if (faceNeedRework(roundingFace)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+std::list<RoundingEdgeOnPrintFaceTarget> getRoundingEdgesOnPrintFaceTargets(ksFaceDefinitionPtr printFace, ReworkType reworkType) {
     std::list<RoundingEdgeOnPrintFaceTarget> targets;
 
     ksLoopCollectionPtr loops(printFace->LoopCollection());
@@ -86,10 +145,30 @@ std::list<RoundingEdgeOnPrintFaceTarget> getRoundingEdgesOnPrintFaceTargets(ksFa
                 RoundingEdgeOnPrintFaceTarget firstTarget = *(targetWithFirstEdge);
                 targets.erase(targetWithFirstEdge);
                 target.trajectory.insert(target.trajectory.cbegin(), firstTarget.trajectory.cbegin(), firstTarget.trajectory.cend());
+                target.roundingFace = firstTarget.roundingFace;
             }
             targets.push_back(target);
         }
     }
+
+    for (std::list<RoundingEdgeOnPrintFaceTarget>::iterator it = targets.begin(); it != targets.end();) {
+        if (targetNeedRework(*it)) {
+            if (reworkType == ReworkType::ONLY_WITHOUT_REWORK) {
+                it = targets.erase(it);
+            } else {
+                it->needRework = true;
+                it++;
+            }
+        } else {
+            if (reworkType == ReworkType::ONLY_WITH_REWORK) {
+                it = targets.erase(it);
+            } else {
+                it->needRework = false;
+                it++;
+            }
+        }
+    }
+
     return targets;
 }
 
@@ -268,24 +347,9 @@ void drawSketch(Sketch sketch, RoundingEdgeOnPrintFaceTarget target, double over
     }
 }
 
-void optimizeRoundingEdgesOnPrintFace(KompasObjectPtr kompas, ksPartPtr part, ksFaceDefinitionPtr printFace, double overhangThreshold) {
-    std::list<RoundingEdgeOnPrintFaceTarget> targets = getRoundingEdgesOnPrintFaceTargets(printFace);
-
-    // Подсвечиваем цели.   Отладка!
-    /*
-    ksDocument3DPtr document3d(kompas->ActiveDocument3D());
-    ksChooseMngPtr chooseMng(document3d->GetChooseMng());
-    for (RoundingHorizontalEdgeTarget target : targets) {
-        chooseMng->UnChooseAll();
-        for (ksEdgeDefinitionPtr edge : target.trajectory) {
-            chooseMng->Choose(edge);
-        }
-        _getwch();
-        chooseMng->UnChooseAll();
-        chooseMng->Choose(target.roundingFace);
-        _getwch();
-    }
-    */
+void optimizeRoundingEdgesOnPrintFace(KompasObjectPtr kompas, ksPartPtr part, ksFaceDefinitionPtr printFace, double overhangThreshold,
+        ReworkType reworkType) {
+    std::list<RoundingEdgeOnPrintFaceTarget> targets = getRoundingEdgesOnPrintFaceTargets(printFace, reworkType);
 
     ksEntityPtr macroEntity(part->NewEntity(o3d_MacroObject));
     ksMacro3DDefinitionPtr macro(macroEntity->GetDefinition());
@@ -296,7 +360,11 @@ void optimizeRoundingEdgesOnPrintFace(KompasObjectPtr kompas, ksPartPtr part, ks
     for (RoundingEdgeOnPrintFaceTarget target : targets) {
         ksEntityPtr macroElementEntity(part->NewEntity(o3d_MacroObject));
         ksMacro3DDefinitionPtr macroElement(macroElementEntity->GetDefinition());
-        macroElementEntity->name = MACRO_NAME_ROUNDING_EDGES_ON_PRINT_FACE_ELEMENT;
+        if (target.needRework) {
+            macroElementEntity->name = MACRO_NAME_ROUNDING_EDGES_ON_PRINT_FACE_ELEMENT_WITH_REWORK;
+        } else {
+            macroElementEntity->name = MACRO_NAME_ROUNDING_EDGES_ON_PRINT_FACE_ELEMENT;
+        }
         macroElement->StaffVisible = true;
         macroElementEntity->Create();
 

@@ -142,7 +142,7 @@ int main() { // Отладка!
         }
     }
 
-    optimizeRoundingEdgesOnPrintFace(kompas, part, printFace, 50.0);
+    optimizeRoundingEdgesOnPrintFace(kompas, part, printFace, 50.0, ReworkType::ALL);
 
     return 0;
 }
