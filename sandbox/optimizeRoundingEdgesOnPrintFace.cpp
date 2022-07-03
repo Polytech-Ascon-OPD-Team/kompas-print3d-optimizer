@@ -149,13 +149,25 @@ void drawSketch(Sketch sketch, RoundingEdgeOnPrintFaceTarget target, double over
         IParametriticConstraintPtr constraint(lineSeg1DrawingObject1->NewConstraint());
         constraint->ConstraintType = ksConstraintTypeEnum::ksCMergePoints;
         constraint->Index = 0;
-        constraint->Partner = static_cast<IDispatch*>(startPoint);
+        constraint->Partner = static_cast<IDispatch*>(roundingArc);
+        if (startPointIs1) {
+            constraint->PartnerIndex = 1;
+        } else {
+            constraint->PartnerIndex = 2;
+        }
         constraint->Create();
     }
     {
         IParametriticConstraintPtr constraint(lineSeg1DrawingObject1->NewConstraint());
         constraint->ConstraintType = ksConstraintTypeEnum::ksCTangentTwoCurves;
         constraint->Partner = static_cast<IDispatch*>(roundingArc);
+        constraint->Create();
+    }
+    {
+        IParametriticConstraintPtr constraint(lineSeg1DrawingObject1->NewConstraint());
+        constraint->ConstraintType = ksConstraintTypeEnum::ksCMergePoints;
+        constraint->Index = 0;
+        constraint->Partner = static_cast<IDispatch*>(startPoint);
         constraint->Create();
     }
 
@@ -229,6 +241,31 @@ void drawSketch(Sketch sketch, RoundingEdgeOnPrintFaceTarget target, double over
         arc->Direction = !roundingArc->Direction;
     }
     arc->Update();
+
+    IDrawingObjectPtr arcDrawingObject(arc);
+    IDrawingObject1Ptr arcDrawingObject1(arcDrawingObject);
+    {
+        IParametriticConstraintPtr constraint(arcDrawingObject1->NewConstraint());
+        constraint->ConstraintType = ksConstraintTypeEnum::ksCMergePoints;
+        constraint->Index = 1;
+        constraint->Partner = static_cast<IDispatch*>(lineSeg1);
+        constraint->PartnerIndex = 0;
+        constraint->Create();
+    }
+    {
+        IParametriticConstraintPtr constraint(arcDrawingObject1->NewConstraint());
+        constraint->ConstraintType = ksConstraintTypeEnum::ksCMergePoints;
+        constraint->Index = 2;
+        constraint->Partner = static_cast<IDispatch*>(lineSeg2);
+        constraint->PartnerIndex = 1;
+        constraint->Create();
+    }
+    {
+        IParametriticConstraintPtr constraint(arcDrawingObject1->NewConstraint());
+        constraint->ConstraintType = ksConstraintTypeEnum::ksCEqualRadius;
+        constraint->Partner = static_cast<IDispatch*>(roundingArc);
+        constraint->Create();
+    }
 }
 
 void optimizeRoundingEdgesOnPrintFace(KompasObjectPtr kompas, ksPartPtr part, ksFaceDefinitionPtr printFace, double overhangThreshold) {
@@ -290,8 +327,8 @@ void optimizeRoundingEdgesOnPrintFace(KompasObjectPtr kompas, ksPartPtr part, ks
         }
         evolutionEntity->Create();
         macroElement->Add(evolutionEntity);
-
         macroElementEntity->Update();
+        
         macro->Add(macroElementEntity);
     }
     macroEntity->Update();
