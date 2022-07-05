@@ -73,7 +73,9 @@ bool faceNeedRework(ksFaceDefinitionPtr roundingFace) {
 }
 
 bool targetNeedRework(RoundingEdgeOnPrintFaceTarget target) {
-    for (ksEdgeDefinitionPtr edge : target.trajectory) {
+    std::list<ksEdgeDefinitionPtr> firstAndLastEdge;
+    firstAndLastEdge.push_back(target.trajectory.front()); firstAndLastEdge.push_back(target.trajectory.back());
+    for (ksEdgeDefinitionPtr edge : firstAndLastEdge) {
         ksFaceDefinitionPtr roundingFace(edge->GetAdjacentFace(false));
         if (!roundingFace->IsCylinder() && !roundingFace->IsTorus()) {
             roundingFace = edge->GetAdjacentFace(true);
