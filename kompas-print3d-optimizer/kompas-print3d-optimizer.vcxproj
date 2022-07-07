@@ -259,7 +259,9 @@
     </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="optimizeRoundingEdgesOnPrintFace.cpp" />
     <ClCompile Include="utils.cpp" />
+    <ClInclude Include="optimizeRoundingEdgesOnPrintFace.hpp" />
     <ClInclude Include="utils.hpp" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
