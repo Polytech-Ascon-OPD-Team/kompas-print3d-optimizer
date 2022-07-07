@@ -149,8 +149,9 @@
     <ClCompile Include="optimizeOverhangingFaces.cpp" />
     <ClCompile Include="optimizeRounding.cpp" />
     <ClCompile Include="selectPlane.cpp" />
-    <ClCompile Include="utils.cpp" />
     <ClCompile Include="optimizeBridgeHole.cpp" />
+    <ClCompile Include="optimizeRoundingEdgesOnPrintFace.cpp" />
+    <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kompasUtils.hpp" />
@@ -161,6 +162,7 @@
     <ClInclude Include="selectPlane.hpp" />
     <ClInclude Include="utils.hpp" />
     <ClInclude Include="optimizeBridgeHole.hpp" />
+    <ClInclude Include="optimizeRoundingEdgesOnPrintFace.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
