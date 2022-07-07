@@ -14,6 +14,7 @@
 #include "optimizeRounding.hpp"
 #include "optimizeElephantFoot.hpp"
 #include "optimizeBridgeHole.hpp"
+#include "optimizeRoundingEdgesOnPrintFace.hpp"
 
 struct PrintSettings {
     double nozzleDiameter;
@@ -66,12 +67,12 @@ void WINAPI LIBRARYENTRY(unsigned int comm) {
     switch (comm) {
         case 1: {
               printSettings = inputPrintSettings(kompas);
-              break;
+              return;
         }
         case 2: {
             printFace = getSelectedPlane(kompas, &printPlaneEq);
             oldDocument = kompas->ActiveDocument3D();
-            break;
+            return;
         }
         case 3:
         {
@@ -84,7 +85,7 @@ void WINAPI LIBRARYENTRY(unsigned int comm) {
             chooseMng->UnChooseAll();
             chooseMng->Choose(printFace);
             kompas->ksMessage(oss.str().c_str());
-            break;
+            return;
         }
         case 4: {
               double radius = 0.0;
@@ -92,48 +93,42 @@ void WINAPI LIBRARYENTRY(unsigned int comm) {
                   return;
               }
               optimizeByRounding(kompas, printFace, printPlaneEq, radius, printSettings.overhangThreshold);
-              kompas->ksMessage("Оптимизация модели была выполнена!");
               break;
         }
         case 5: {
             optimizeElephantFoot(kompas, printFace, printPlaneEq, 2 * printSettings.layerHeight);
-            kompas->ksMessage("Оптимизация модели была выполнена!");
             break;
         }
         case 6: {
-            kompas->ksMessage("Оптимизация модели была выполнена!");
+            optimizeRoundingEdgesOnPrintFace(kompas, oldDocument->GetPart(pTop_Part), printFace,
+                printSettings.overhangThreshold, ReworkType::ALL);
             break;
         }
         case 7: {
-            kompas->ksMessage("Оптимизация модели была выполнена!");
+            optimizeRoundingEdgesOnPrintFace(kompas, oldDocument->GetPart(pTop_Part), printFace,
+                printSettings.overhangThreshold, ReworkType::ONLY_WITHOUT_REWORK);
             break;
         }
         case 8: {
             optimizeBridgeHoleFill(oldDocument->GetPart(pTop_Part), printFace, printSettings.layerHeight, HoleType::NOT_CIRCLE);
             optimizeBridgeHoleBuild(kompas, oldDocument->GetPart(pTop_Part), printFace, printSettings.layerHeight);
-            oldDocument->RebuildDocument();
-            kompas->ksMessage("Оптимизация модели была выполнена!");
             break;
         }
         case 9: {
             optimizeBridgeHoleFill(oldDocument->GetPart(pTop_Part), printFace, printSettings.layerHeight, HoleType::ALL);
-            oldDocument->RebuildDocument();
-            kompas->ksMessage("Оптимизация модели была выполнена!");
             break;
         }
         case 10: {
             optimizeBridgeHoleBuild(kompas, oldDocument->GetPart(pTop_Part), printFace, printSettings.layerHeight);
-            oldDocument->RebuildDocument();
-            kompas->ksMessage("Оптимизация модели была выполнена!");
             break;
         }
         case 11: {
-            kompas->ksMessage("Оптимизация модели была выполнена!");
             break;
         }
         case 12: {
-            kompas->ksMessage("Оптимизация модели была выполнена!");
             break;
         }
     }
+    oldDocument->RebuildDocument();
+    kompas->ksMessage("Оптимизация модели была выполнена!");
 }
