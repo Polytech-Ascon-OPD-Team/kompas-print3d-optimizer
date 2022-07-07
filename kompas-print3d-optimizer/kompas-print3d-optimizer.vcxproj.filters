@@ -25,6 +25,9 @@
     <ClInclude Include="utils.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="optimizeRoundingEdgesOnPrintFace.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mainLibrary.cpp">
@@ -54,6 +57,9 @@
     <ClCompile Include="utils.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="optimizeRoundingEdgesOnPrintFace.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="mainDll.def" />
@@ -73,5 +79,10 @@
     <ResourceCompile Include="resources\main.rc">
       <Filter>resources</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="..\kompas-print3d-optimizer.xml">
+      <Filter>resources</Filter>
+    </Xml>
   </ItemGroup>
 </Project>

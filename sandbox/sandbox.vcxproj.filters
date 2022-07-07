@@ -36,6 +36,9 @@
     <ClCompile Include="optimizeBridgeHole.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="optimizeRoundingEdgesOnPrintFace.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kompasUtils.hpp">
@@ -60,6 +63,9 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="optimizeBridgeHole.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="optimizeRoundingEdgesOnPrintFace.hpp">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>
