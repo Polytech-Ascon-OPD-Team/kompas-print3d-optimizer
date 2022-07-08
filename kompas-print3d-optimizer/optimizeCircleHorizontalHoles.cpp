@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "optimizeCircleHorizontalHoles.hpp"
 #include "selectPlane.hpp"
 #include <iostream>
