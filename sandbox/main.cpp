@@ -10,8 +10,6 @@
 #include "optimizeBridgeHole.hpp"
 #include "optimizeRoundingEdgesOnPrintFace.hpp"
 
-
-
 #define _USE_MATH_DEFINES
 #include <math.h>
 #import "ksconstants.tlb" no_namespace named_guids
@@ -68,12 +66,11 @@ void performHorizontalHolesOptimization(KompasObjectPtr kompas) {
 void performBridgeHolesBuildOptimization(KompasObjectPtr kompas) {
     double depth;
     if (kompas->ksReadDouble("Высота слоя печати: ", 0.2, DBL_MIN, DBL_MAX, &depth) == 1) {
-        optimizeBridgeHoleBuild(kompas, oldDocument->GetPart(pTop_Part), printFace, depth);
+        optimizeBridgeHoleBuild(kompas, kompas->ActiveDocument3D(), oldDocument->GetPart(pTop_Part), printFace, depth);
         oldDocument->RebuildDocument();
         kompas->ksMessage("Оптимизация модели была выполнена!");
     }
 }
-
 
 void performBridgeHolesFillOptimization(KompasObjectPtr kompas) {
     double depth;
@@ -98,40 +95,11 @@ void performBridgeHolesFillOptimization(KompasObjectPtr kompas) {
             return;
             break;
         }
-        optimizeBridgeHoleFill(oldDocument->GetPart(pTop_Part), printFace, depth, choisedType);
+        optimizeBridgeHoleFill(oldDocument, oldDocument->GetPart(pTop_Part), printFace, depth, choisedType);
         oldDocument->RebuildDocument();
         kompas->ksMessage("Оптимизация модели была выполнена!");
     }
 }
-
-/*
-int main() { // Отладка!
-    CoInitialize(nullptr);
-    KompasObjectPtr kompas = kompasInit();
-
-    ksDocument3DPtr document3d = kompas->ActiveDocument3D();
-    ksChooseMngPtr chooseMng(document3d->GetChooseMng());
-
-    ksPartPtr part(document3d->GetPart(pTop_Part));
-
-    ksBodyPtr body = part->GetMainBody();
-    ksFaceCollectionPtr faces = body->FaceCollection();
-    int facesCount = faces->GetCount();
-
-    ksFaceDefinitionPtr printFace;
-
-    // Задаем грань стола 3д принтера. Только для тестирования
-    for (int printFaceIndex = 0; printFaceIndex < facesCount; printFaceIndex++) {
-        printFace = faces->GetByIndex(printFaceIndex);
-        if (abs(printFace->GetArea(ksLUnMM) - 1052) < 1) {
-            break;
-        }
-    }
-
-    optimizeRoundingEdgesOnPrintFace(kompas, part, printFace, 50.0, ReworkType::ALL);
-
-    return 0;
-}*/
 
 int main() {
     CoInitialize(nullptr);
