@@ -9,6 +9,7 @@
 
 #include "utils.hpp"
 #include "kompasUtils.hpp"
+#include "concaveAngle.hpp"
 
 #import "ksconstants.tlb" no_namespace named_guids
 #import "ksConstants3D.tlb" no_namespace named_guids
@@ -74,7 +75,7 @@ bool isHoleDirect(ksFaceDefinitionPtr face, ksLoopPtr loop, ksFaceDefinitionPtr 
     return true;
 }
 
-bool checkHoleLoop(ksFaceDefinitionPtr face, ksLoopPtr loop, ksFaceDefinitionPtr printFace, ksMeasurerPtr measurer) {
+bool checkHoleLoop(ksDocument3DPtr document3d, ksFaceDefinitionPtr face, ksLoopPtr loop, ksFaceDefinitionPtr printFace, ksMeasurerPtr measurer) {
     if (!isHoleDirect(face, loop, printFace, measurer)) {
         return false;
     }
@@ -88,6 +89,10 @@ bool checkHoleLoop(ksFaceDefinitionPtr face, ksLoopPtr loop, ksFaceDefinitionPtr
         ksFaceDefinitionPtr holeFace(holeEdge->GetAdjacentFace(false));
         if (holeFace == face) {
             holeFace = holeEdge->GetAdjacentFace(true);
+        }
+
+        if (isConcaveAngle(document3d, holeEdge)) {
+            return false;
         }
 
         measurer->SetObject1(printFace);
@@ -141,7 +146,7 @@ ksEntityPtr cutExtrusion(ksPartPtr part, ksEntityPtr sketchEntity, bool normalDi
 
 /* Закрытие нависающих отверстий тонким слоем материала */
 
-std::list<BridgeHoleFillTarget> getBridgeHoleFillTargets(ksPartPtr part, ksFaceDefinitionPtr printFace, HoleType holeType) {
+std::list<BridgeHoleFillTarget> getBridgeHoleFillTargets(ksDocument3DPtr document3d, ksPartPtr part, ksFaceDefinitionPtr printFace, HoleType holeType) {
     ksMeasurerPtr measurer(part->GetMeasurer());
 
     ksBodyPtr body = part->GetMainBody();
@@ -173,7 +178,7 @@ std::list<BridgeHoleFillTarget> getBridgeHoleFillTargets(ksPartPtr part, ksFaceD
                 }
             }
 
-            if (checkHoleLoop(face, innerLoop, printFace, measurer)) {
+            if (checkHoleLoop(document3d, face, innerLoop, printFace, measurer)) {
                 bridgeHoleFillTargets.push_back(BridgeHoleFillTarget{ innerLoop, face });
             }
         }
@@ -218,8 +223,8 @@ void fillBridgeHoles(ksPartPtr part, std::list<BridgeHoleFillTarget> bridgeHoleF
     macroEntity->Update();
 }
 
-void optimizeBridgeHoleFill(ksPartPtr part, ksFaceDefinitionPtr printFace, double extrusionDepth, HoleType holeType) {
-    std::list<BridgeHoleFillTarget> targets = getBridgeHoleFillTargets(part, printFace, holeType);
+void optimizeBridgeHoleFill(ksDocument3DPtr document3d, ksPartPtr part, ksFaceDefinitionPtr printFace, double extrusionDepth, HoleType holeType) {
+    std::list<BridgeHoleFillTarget> targets = getBridgeHoleFillTargets(document3d, part, printFace, holeType);
     fillBridgeHoles(part, targets, extrusionDepth);
 }
 
@@ -239,7 +244,7 @@ bool isOuterLoopForBuild(ksLoopPtr loop) {
     return true;
 }
 
-std::list<BridgeHoleBuildTarget> getBridgeHoleBuildTargets(ksPartPtr part, ksFaceDefinitionPtr printFace) {
+std::list<BridgeHoleBuildTarget> getBridgeHoleBuildTargets(ksDocument3DPtr document3d, ksPartPtr part, ksFaceDefinitionPtr printFace) {
     ksMeasurerPtr measurer(part->GetMeasurer());
 
     ksBodyPtr body = part->GetMainBody();
@@ -289,7 +294,7 @@ std::list<BridgeHoleBuildTarget> getBridgeHoleBuildTargets(ksPartPtr part, ksFac
             }
         }
 
-        if (checkHoleLoop(face, innerLoop, printFace, measurer)) {
+        if (checkHoleLoop(document3d, face, innerLoop, printFace, measurer)) {
             bridgeHoleBuildTargets.push_back(BridgeHoleBuildTarget{ innerLoop, outerLoop, face });
         }
     }
@@ -654,7 +659,7 @@ void buildBridgeHoles(KompasObjectPtr kompas, ksPartPtr part, std::list<BridgeHo
     macroEntity->Update();
 }
 
-void optimizeBridgeHoleBuild(KompasObjectPtr kompas, ksPartPtr part, ksFaceDefinitionPtr printFace, double stepDepth) {
-    std::list<BridgeHoleBuildTarget> targets = getBridgeHoleBuildTargets(part, printFace);
+void optimizeBridgeHoleBuild(KompasObjectPtr kompas, ksDocument3DPtr document3d, ksPartPtr part, ksFaceDefinitionPtr printFace, double stepDepth) {
+    std::list<BridgeHoleBuildTarget> targets = getBridgeHoleBuildTargets(document3d, part, printFace);
     buildBridgeHoles(kompas, part, targets, stepDepth);
 }
