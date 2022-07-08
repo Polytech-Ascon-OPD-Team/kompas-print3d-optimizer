@@ -15,6 +15,7 @@
 #include "optimizeElephantFoot.hpp"
 #include "optimizeBridgeHole.hpp"
 #include "optimizeRoundingEdgesOnPrintFace.hpp"
+#include "optimizeCircleHorizontalHoles.hpp"
 
 struct PrintSettings {
     double nozzleDiameter;
@@ -123,6 +124,7 @@ void WINAPI LIBRARYENTRY(unsigned int comm) {
             break;
         }
         case 11: {
+            optimizeCircleHorizontalHoles(kompas, printSettings.overhangThreshold, printFace, printPlaneEq);
             break;
         }
         case 12: {

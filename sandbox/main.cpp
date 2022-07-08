@@ -10,6 +10,8 @@
 #include "optimizeBridgeHole.hpp"
 #include "optimizeRoundingEdgesOnPrintFace.hpp"
 
+
+
 #define _USE_MATH_DEFINES
 #include <math.h>
 #import "ksconstants.tlb" no_namespace named_guids
@@ -54,30 +56,12 @@ void performAntiOverhangingOptimization(KompasObjectPtr kompas) {
     }
 }
 
+
+
 void performHorizontalHolesOptimization(KompasObjectPtr kompas) {
-    IApplicationPtr api7 = kompas->ksGetApplication7();
-    IKompasDocument3DPtr document3d(api7->GetActiveDocument());
-
-    IPart7Ptr topPart(document3d->GetTopPart());
-    ksPartPtr part = kompas->TransferInterface(topPart, 1, 0);
-    ksDocument3DPtr doc3d = kompas->ActiveDocument3D();
-    //ksChooseMngPtr chooser(doc3d->GetChooseMng());
-    std::set<ksFaceDefinitionPtr> holes = getHorizontalCircleHoles(part, printFace, printPlaneEq);
-    std::cout << "holes number:" << holes.size() << "\n";
-    for (std::set<ksFaceDefinitionPtr>::iterator iter = holes.begin(); iter != holes.end(); iter++) {
-        //chooser->Choose(*iter);
-        ksFaceDefinitionPtr face = *iter;
-        ksEntityPtr axisEntity(part->NewEntity(o3d_axisConeFace));
-        ksAxisConefaceDefinitionPtr axis(axisEntity->GetDefinition());
-        axis->SetFace(face);
-        ksVertexDefinitionPtr vertex(ksEdgeDefinitionPtr(ksEdgeCollectionPtr(face->EdgeCollection())->First())->GetVertex(true));
-        axisEntity->Create();
-        ksEntityPtr mainPlaneEntity(part->NewEntity(o3d_planePerpendicular));
-        ksPlanePerpendicularDefinitionPtr mainPlane(mainPlaneEntity->GetDefinition());
-        mainPlane->SetPoint(vertex);
-        mainPlane->SetEdge(axis);
-        mainPlaneEntity->Create();
-
+    double maxAngle; //угол нависания
+    if (checkSelectedFace(kompas) && kompas->ksReadDouble("Макс. угол нависания: ", 60, -DBL_MIN, DBL_MAX, &maxAngle) == 1) {
+        optimizeCircleHorizontalHoles(kompas, maxAngle, printFace, printPlaneEq);
     }
 }
 
@@ -89,6 +73,7 @@ void performBridgeHolesBuildOptimization(KompasObjectPtr kompas) {
         kompas->ksMessage("Оптимизация модели была выполнена!");
     }
 }
+
 
 void performBridgeHolesFillOptimization(KompasObjectPtr kompas) {
     double depth;
@@ -119,6 +104,7 @@ void performBridgeHolesFillOptimization(KompasObjectPtr kompas) {
     }
 }
 
+/*
 int main() { // Отладка!
     CoInitialize(nullptr);
     KompasObjectPtr kompas = kompasInit();
@@ -145,9 +131,9 @@ int main() { // Отладка!
     optimizeRoundingEdgesOnPrintFace(kompas, part, printFace, 50.0, ReworkType::ALL);
 
     return 0;
-}
+}*/
 
-int main1() {
+int main() {
     CoInitialize(nullptr);
     KompasObjectPtr kompas = kompasInit();
     if (!kompas) {

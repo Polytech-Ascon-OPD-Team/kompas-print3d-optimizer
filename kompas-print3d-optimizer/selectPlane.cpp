@@ -8,7 +8,6 @@
 
 #define EPS_PLANE_EQ 0.001
 
-
 void checkPlane(KompasObjectPtr kompas, double a, double b, double c, double d, int* s1, int* s2) {
     *s1 = 0;
     *s2 = 0;
@@ -88,11 +87,17 @@ bool PlaneEq::isVertical(ksEdgeDefinitionPtr edge, double cos_angle) {
             x = x2 - x1;
             y = y2 - y1;
             z = z2 - z1;
-            double n_mul_vect = (a * x) + (b * x) + (c * z);
+            std::cout << "edge vector: " << " x:" << x << " y:" << y << " z:" << z << "\n";
+            std::cout << "n vector: " << " x" << a << " y:" << b << " z:" << c << "\n";
+
+            double n_mul_vect = (a * x) + (b * y) + (c * z);
             double n_abs = sqrt((a * a) + (b * b) + (c * c));
             double vect_abs = sqrt((x * x) + (y * y) + (z * z));
             if ((n_abs > 0.001) && (vect_abs > 0.001)) {
                 double cos_n_vect = n_mul_vect / (n_abs * vect_abs);
+                std::cout << "cos: " << cos_n_vect << "\n";
+                std::cout << "limit cos: " << cos_angle << "\n";
+
                 return abs(cos_n_vect) > cos_angle;
             }
         }
@@ -185,6 +190,7 @@ ksFaceDefinitionPtr getSelectedPlane(KompasObjectPtr kompas, PlaneEq* planeEq) {
         } else {
             kompas->ksMessage("Плоскость печати не выбрана!");
         }
+
     }
     return nullptr;
 }
