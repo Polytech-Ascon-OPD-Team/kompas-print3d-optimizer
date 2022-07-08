@@ -110,16 +110,16 @@ void WINAPI LIBRARYENTRY(unsigned int comm) {
             break;
         }
         case 8: {
-            optimizeBridgeHoleFill(oldDocument->GetPart(pTop_Part), printFace, printSettings.layerHeight, HoleType::NOT_CIRCLE);
-            optimizeBridgeHoleBuild(kompas, oldDocument->GetPart(pTop_Part), printFace, printSettings.layerHeight);
+            optimizeBridgeHoleFill(oldDocument, oldDocument->GetPart(pTop_Part), printFace, printSettings.layerHeight, HoleType::NOT_CIRCLE);
+            optimizeBridgeHoleBuild(kompas, oldDocument, oldDocument->GetPart(pTop_Part), printFace, printSettings.layerHeight);
             break;
         }
         case 9: {
-            optimizeBridgeHoleFill(oldDocument->GetPart(pTop_Part), printFace, printSettings.layerHeight, HoleType::ALL);
+            optimizeBridgeHoleFill(oldDocument, oldDocument->GetPart(pTop_Part), printFace, printSettings.layerHeight, HoleType::ALL);
             break;
         }
         case 10: {
-            optimizeBridgeHoleBuild(kompas, oldDocument->GetPart(pTop_Part), printFace, printSettings.layerHeight);
+            optimizeBridgeHoleBuild(kompas, oldDocument, oldDocument->GetPart(pTop_Part), printFace, printSettings.layerHeight);
             break;
         }
         case 11: {

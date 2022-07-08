@@ -28,6 +28,9 @@
     <ClInclude Include="optimizeRoundingEdgesOnPrintFace.hpp">
       <Filter>include</Filter>
     </ClInclude>
+    <ClInclude Include="concaveAngle.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mainLibrary.cpp">
@@ -58,6 +61,9 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="optimizeRoundingEdgesOnPrintFace.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="concaveAngle.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>

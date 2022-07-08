@@ -259,8 +259,10 @@
     </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="concaveAngle.cpp" />
     <ClCompile Include="optimizeRoundingEdgesOnPrintFace.cpp" />
     <ClCompile Include="utils.cpp" />
+    <ClInclude Include="concaveAngle.hpp" />
     <ClInclude Include="optimizeRoundingEdgesOnPrintFace.hpp" />
     <ClInclude Include="utils.hpp" />
     <Reference Include="System" />
