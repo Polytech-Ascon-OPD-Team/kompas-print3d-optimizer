@@ -1,16 +1,12 @@
 #ifndef UTILS_HPP
 #define UTILS_HPP
 
+#include "stdafx.h"
+
 #include <list>
 #include <algorithm>
 #include <comutil.h>
 #include <OleAuto.h>
-
-#import "ksconstants.tlb" no_namespace named_guids
-#import "ksConstants3D.tlb" no_namespace named_guids
-#import "kAPI5.tlb" no_namespace named_guids rename( "min", "Imin" ) rename( "max", "Imax" ) rename( "ksFragmentLibrary", "ksIFragmentLibrary" )
-#import "kAPI7.tlb" no_namespace named_guids rename( "CreateWindow", "ICreateWindow" ) rename( "PostMessage", "IPostMessage" ) rename( "MessageBoxEx", "IMessageBoxEx" )
-
 
 bool doubleEqual(double a, double b, double epsilon = 0.00001);
 

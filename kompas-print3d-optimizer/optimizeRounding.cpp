@@ -1,16 +1,12 @@
-#include "StdAfx.h"
+#include "stdafx.h"
 #include "optimizeRounding.hpp"
-#include "selectPlane.hpp"
 
 #include <iostream>
+
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-#import "ksconstants.tlb" no_namespace named_guids
-#import "ksConstants3D.tlb" no_namespace named_guids
-#import "kAPI5.tlb" no_namespace named_guids rename( "min", "Imin" ) rename( "max", "Imax" ) rename( "ksFragmentLibrary", "ksIFragmentLibrary" )
-#import "kAPI7.tlb" no_namespace named_guids rename( "CreateWindow", "ICreateWindow" ) rename( "PostMessage", "IPostMessage" ) rename( "MessageBoxEx", "IMessageBoxEx" )
-
+#include "selectPlane.hpp"
 
 bool checkEdge(ksMeasurerPtr measurer, ksEdgeDefinitionPtr edge, double radius) {
     if (edge) {

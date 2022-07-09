@@ -1,16 +1,16 @@
-#include "StdAfx.h"
+#include "stdafx.h"
 #include "optimizeCircleHorizontalHoles.hpp"
-#include "selectPlane.hpp"
+
 #include <iostream>
 #include <set>
+
 #define _USE_MATH_DEFINES
 #include <math.h>
+
 #include "utils.hpp"
 #include "concaveAngle.hpp"
-#import "ksconstants.tlb" no_namespace named_guids
-#import "ksConstants3D.tlb" no_namespace named_guids
-#import "kAPI5.tlb" no_namespace named_guids rename( "min", "Imin" ) rename( "max", "Imax" ) rename( "ksFragmentLibrary", "ksIFragmentLibrary" )
-#import "kAPI7.tlb" no_namespace named_guids rename( "CreateWindow", "ICreateWindow" ) rename( "PostMessage", "IPostMessage" ) rename( "MessageBoxEx", "IMessageBoxEx" )
+#include "selectPlane.hpp"
+
 #define EPS_ANGLE 0.001
 #define EPS_DISTANCE 0.00001
 

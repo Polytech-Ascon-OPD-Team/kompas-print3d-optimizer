@@ -4,7 +4,7 @@
     <ClInclude Include="resources\resource.h">
       <Filter>resources</Filter>
     </ClInclude>
-    <ClInclude Include="StdAfx.h">
+    <ClInclude Include="stdafx.h">
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="kompasUtils.hpp">
@@ -42,7 +42,7 @@
     <ClCompile Include="mainDll.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="StdAfx.cpp">
+    <ClCompile Include="stdafx.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="kompasUtils.cpp">

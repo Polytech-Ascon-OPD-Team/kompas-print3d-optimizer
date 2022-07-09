@@ -1,13 +1,8 @@
-#include "StdAfx.h"
-
+#include "stdafx.h"
 #include "optimizeRoundingEdgesOnPrintFace.hpp"
 
 #include <sstream>
 #include <atlbase.h>
-
-#import "ksconstants.tlb" no_namespace named_guids
-#import "ksConstants3D.tlb" no_namespace named_guids
-#import "kAPI5.tlb" no_namespace named_guids rename( "min", "Imin" ) rename( "max", "Imax" ) rename( "ksFragmentLibrary", "ksIFragmentLibrary" )
 
 #include "kompasUtils.hpp"
 #include "utils.hpp"

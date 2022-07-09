@@ -1,8 +1,5 @@
+#include "stdafx.h"
 #include "kompasUtils.hpp"
-
-#include "StdAfx.h"
-
-#import <kAPI5.tlb> no_namespace named_guids rename( "min", "Imin" ) rename( "max", "Imax" ) rename( "ksFragmentLibrary", "ksIFragmentLibrary" )
 
 KompasObjectPtr getKompasObjectPtr() {
     KompasObjectPtr kompas(NULL);
