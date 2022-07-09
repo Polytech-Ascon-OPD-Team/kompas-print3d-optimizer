@@ -5,6 +5,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include "utils.hpp"
+#include "concaveAngle.hpp"
 #import "ksconstants.tlb" no_namespace named_guids
 #import "ksConstants3D.tlb" no_namespace named_guids
 #import "kAPI5.tlb" no_namespace named_guids rename( "min", "Imin" ) rename( "max", "Imax" ) rename( "ksFragmentLibrary", "ksIFragmentLibrary" )
@@ -17,6 +18,8 @@ ksEntityPtr makeAxis(ksPartPtr part, ksEntityPtr face1, ksEntityPtr face2) {
     ksAxis2PlanesDefinitionPtr axis(axisEntity->GetDefinition());
     axis->SetPlane(1, face1);
     axis->SetPlane(2, face2);
+    axisEntity->hidden = true;
+
     axisEntity->Create();
     return axisEntity;
 }
@@ -60,14 +63,14 @@ ksEntityPtr createCute(ksPartPtr part, Sketch sketch, ksFaceDefinitionPtr depthF
     return cutEntity;
 }
 
+std::set<ksFaceDefinitionPtr> getHorizontalCircleHoles(ksDocument3DPtr document3d, ksFaceDefinitionPtr printFace, PlaneEq planeEq) {
+    ksPartPtr part(document3d->GetPart(pTop_Part));
 
-std::set<ksFaceDefinitionPtr> getHorizontalCircleHoles(ksPartPtr part, ksFaceDefinitionPtr printFace, PlaneEq planeEq) {
     ksMeasurerPtr measurer(part->GetMeasurer());
 
     ksBodyPtr body = part->GetMainBody();
     ksFaceCollectionPtr faces = body->FaceCollection();
     int facesCount = faces->GetCount();
-
     std::set<ksFaceDefinitionPtr> holes;
 
     for (int faceIndex = 0; faceIndex < facesCount; faceIndex++) {
@@ -80,7 +83,7 @@ std::set<ksFaceDefinitionPtr> getHorizontalCircleHoles(ksPartPtr part, ksFaceDef
                     ksEdgeCollectionPtr edges(innerLoop->EdgeCollection());
                     if (edges->GetCount() == 1) {
                         ksEdgeDefinitionPtr edge(edges->GetByIndex(0));
-                        if ((edge->IsCircle() || edge->IsEllipse())) {
+                        if ((edge->IsCircle() || edge->IsEllipse()) && !isConcaveAngle(document3d, edge)) {
                             ksFaceDefinitionPtr otherFace = nullptr;
                             if (edge->GetAdjacentFace(true) != face) {
                                 otherFace = edge->GetAdjacentFace(true);
@@ -94,7 +97,7 @@ std::set<ksFaceDefinitionPtr> getHorizontalCircleHoles(ksPartPtr part, ksFaceDef
                                     if (otherEdge == edge) {
                                         otherEdge = otherFaceEdges->GetByIndex(1);
                                     }
-                                    if ((otherEdge->IsCircle() || otherEdge->IsEllipse())) {
+                                    if ((otherEdge->IsCircle() || otherEdge->IsEllipse()) && !isConcaveAngle(document3d, otherEdge)) {
                                         holes.insert(otherFace);
                                     }
                                 }
@@ -107,6 +110,9 @@ std::set<ksFaceDefinitionPtr> getHorizontalCircleHoles(ksPartPtr part, ksFaceDef
     }
     return holes;
 }
+
+
+
 
 void optimizeCircleHorizontalHoles(KompasObjectPtr kompas, double maxAngle, ksFaceDefinitionPtr printFace, PlaneEq printPlaneEq) {
     double tg_max_angle = tan((maxAngle * M_PI) / 180);
@@ -122,7 +128,7 @@ void optimizeCircleHorizontalHoles(KompasObjectPtr kompas, double maxAngle, ksFa
     mainMacroElementEntity->Create();
 
     ksDocument3DPtr doc3d = kompas->ActiveDocument3D();
-    std::set<ksFaceDefinitionPtr> holes = getHorizontalCircleHoles(part, printFace, printPlaneEq);
+    std::set<ksFaceDefinitionPtr> holes = getHorizontalCircleHoles(doc3d, printFace, printPlaneEq);
     std::cout << "holes number:" << holes.size() << "\n";
     ksMeasurerPtr measurer(part->GetMeasurer());
     IKompasDocument3DPtr doc(api7->ActiveDocument);
@@ -130,6 +136,7 @@ void optimizeCircleHorizontalHoles(KompasObjectPtr kompas, double maxAngle, ksFa
     IModelContainerPtr modelcontainer(part7);
     IPoints3DPtr points3D(modelcontainer->Points3D);
     for (std::set<ksFaceDefinitionPtr>::iterator iter = holes.begin(); iter != holes.end(); iter++) {
+        bool removeItPls = false;
         ksEntityPtr macroElementEntity(part->NewEntity(o3d_MacroObject));
         ksMacro3DDefinitionPtr macroElement(macroElementEntity->GetDefinition());
         macroElementEntity->name = "Объекты построенния";
@@ -148,12 +155,13 @@ void optimizeCircleHorizontalHoles(KompasObjectPtr kompas, double maxAngle, ksFa
         ksVertexDefinitionPtr vertex(ksEdgeDefinitionPtr(ksEdgeCollectionPtr(face->EdgeCollection())->First())->GetVertex(true));
         axisEntity->hidden = true;
         axisEntity->Create();
-
-        measurer->SetObject1(axisEntity);
+        macroElement->Add(axisEntity);
         measurer->SetObject1(printFace->GetEntity());
+        measurer->SetObject2(axisEntity);
         measurer->Calc();
-        if (abs(measurer->angle) < EPS_ANGLE) {
-            macroElement->Add(axisEntity);
+        //std::cout << "angle:" << abs(measurer->angle) << "\n";
+        if (abs(measurer->angle) < EPS_ANGLE) {   
+            //std::cout << "OK!\n";
             ksEntityPtr mainPlaneEntity(part->NewEntity(o3d_planePerpendicular));
             ksPlanePerpendicularDefinitionPtr mainPlane(mainPlaneEntity->GetDefinition());
             mainPlane->SetPoint(vertex);
@@ -174,7 +182,6 @@ void optimizeCircleHorizontalHoles(KompasObjectPtr kompas, double maxAngle, ksFa
             Sketch sketch = createSketch(kompas, part, mainPlaneEntity);
             sketch.definition->AddProjectionOf(face);
             sketch.definition->AddProjectionOf(axis2);
-            axis2->hidden = true;
             macroElement->Add(axis2);
 
             IViewsAndLayersManagerPtr viewsAndLayersManager(sketch.document2d_api7->ViewsAndLayersManager);
@@ -230,16 +237,25 @@ void optimizeCircleHorizontalHoles(KompasObjectPtr kompas, double maxAngle, ksFa
                 polyLine2->AddPoint(3, p2_x, p2_y);
                 polyLine2->Update();
             } else {
-                std::cout << "err\n";
+                removeItPls = true;
+                std::cout << "error\n";
             }
             sketch.definition->EndEdit();
             ksEntityPtr cutEntity = createCute(part, sketch, face1, face2);
             macroElement->Add(cutEntity);
             macroElement->Add(sketch.entity);
 
+        } else {
+            removeItPls = true;
         }
         macroElementEntity->Update();
-        mainMacroElement->Add(macroElementEntity);
+        if (!removeItPls) {
+            mainMacroElement->Add(macroElementEntity);
+        } else {
+            doc3d->DeleteObject(macroElementEntity);
+            //doc3d->RebuildDocument();
+
+        }
     }
     mainMacroElementEntity->Update();
 }
