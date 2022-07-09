@@ -1,9 +1,7 @@
+#include "stdafx.h"
 #include "selectPlane.hpp"
+
 #include <iostream>
-#import "ksconstants.tlb" no_namespace named_guids
-#import "ksConstants3D.tlb" no_namespace named_guids
-#import "kAPI5.tlb" no_namespace named_guids rename( "min", "Imin" ) rename( "max", "Imax" ) rename( "ksFragmentLibrary", "ksIFragmentLibrary" )
-#import "kAPI7.tlb" no_namespace named_guids rename( "CreateWindow", "ICreateWindow" ) rename( "PostMessage", "IPostMessage" ) rename( "MessageBoxEx", "IMessageBoxEx" )
 
 #define EPS_PLANE_EQ 0.001
 
@@ -86,7 +84,7 @@ bool PlaneEq::isVertical(ksEdgeDefinitionPtr edge, double cos_angle) {
             x = x2 - x1;
             y = y2 - y1;
             z = z2 - z1;
-            std::cout << "edge vector: " << " x:" << x << " y:" << y << " z:" << z <<"\n";
+            std::cout << "edge vector: " << " x:" << x << " y:" << y << " z:" << z << "\n";
             std::cout << "n vector: " << " x" << a << " y:" << b << " z:" << c << "\n";
 
             double n_mul_vect = (a * x) + (b * y) + (c * z);

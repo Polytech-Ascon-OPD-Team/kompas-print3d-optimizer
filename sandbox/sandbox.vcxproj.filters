@@ -42,6 +42,9 @@
     <ClCompile Include="concaveAngle.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kompasUtils.hpp">
@@ -72,6 +75,9 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="concaveAngle.hpp">
+      <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
       <Filter>include</Filter>
     </ClInclude>
   </ItemGroup>

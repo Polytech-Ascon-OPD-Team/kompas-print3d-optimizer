@@ -1,6 +1,12 @@
-﻿#include <iostream>
+﻿#include "stdafx.h"
+
+#include <iostream>
 #include <cstdlib>
 #include <float.h>
+
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 #include "kompasUtils.hpp"
 #include "selectPlane.hpp"
 #include "optimizeRounding.hpp"
@@ -9,13 +15,6 @@
 #include "optimizeCircleHorizontalHoles.hpp"
 #include "optimizeBridgeHole.hpp"
 #include "optimizeRoundingEdgesOnPrintFace.hpp"
-
-#define _USE_MATH_DEFINES
-#include <math.h>
-#import "ksconstants.tlb" no_namespace named_guids
-#import "ksConstants3D.tlb" no_namespace named_guids
-#import "kAPI5.tlb" no_namespace named_guids rename( "min", "Imin" ) rename( "max", "Imax" ) rename( "ksFragmentLibrary", "ksIFragmentLibrary" )
-#import "kAPI7.tlb" no_namespace named_guids rename( "CreateWindow", "ICreateWindow" ) rename( "PostMessage", "IPostMessage" ) rename( "MessageBoxEx", "IMessageBoxEx" )
 
 ksFaceDefinitionPtr printFace = nullptr;
 PlaneEq printPlaneEq;
