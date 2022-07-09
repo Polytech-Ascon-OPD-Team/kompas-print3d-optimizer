@@ -1,5 +1,7 @@
-#ifndef OPTIMIZE_ROUNDING_HPP
-#define OPTIMIZE_ROUNDING_HPP
+#ifndef OPTIMIZE_ROUNDING_H
+#define OPTIMIZE_ROUNDING_H
+
+#include "stdafx.h"
 
 #include "selectPlane.hpp"
 
